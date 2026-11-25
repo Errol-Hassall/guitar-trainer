@@ -2,6 +2,7 @@ import { db } from './db'
 import { seedDatabase } from './seed-data'
 import type {
   AppExport,
+  BackingTrack,
   Exercise,
   ExerciseInput,
   ExerciseProgress,
@@ -11,6 +12,8 @@ import type {
   Mood,
   PracticeSession,
   PresetInput,
+  RecordingInput,
+  RecordingSummary,
   SessionSection,
   SessionStatus,
   SessionSummary,
@@ -18,6 +21,7 @@ import type {
   Template,
   TemplateInput,
   Theme,
+  TrackInput,
   UpdateExerciseInput,
   UpdateTemplateInput,
   WeeklyReview,
@@ -1000,4 +1004,230 @@ export function restoreBackup(data: AppExport): void {
   })
   // Re-seed so built-ins exist even if the backup predates them.
   seedDatabase(db)
+}
+
+// --- Audio tools: recordings and backing tracks ---------------------------------
+// Note: restoreBackup deliberately leaves these tables untouched — audio blobs are
+// big and out of scope for the v1 JSON backup format.
+
+interface RecordingRow {
+  id: number
+  name: string
+  mime: string
+  duration_seconds: number
+  session_id: number | null
+  session_name: string | null
+  exercise_id: number | null
+  exercise_name: string | null
+  is_reference: number
+  created_at: string
+}
+
+interface TrackRow {
+  id: number
+  name: string
+  source: 'file' | 'url'
+  url: string | null
+  mime: string | null
+  created_at: string
+}
+
+function mapRecording(row: RecordingRow): RecordingSummary {
+  return {
+    id: row.id,
+    name: row.name,
+    mime: row.mime,
+    durationSeconds: row.duration_seconds,
+    sessionId: row.session_id,
+    sessionName: row.session_name,
+    exerciseId: row.exercise_id,
+    exerciseName: row.exercise_name,
+    isReference: row.is_reference === 1,
+    createdAt: row.created_at,
+  }
+}
+
+function mapTrack(row: TrackRow): BackingTrack {
+  return {
+    id: row.id,
+    name: row.name,
+    source: row.source,
+    url: row.url,
+    mime: row.mime,
+    createdAt: row.created_at,
+  }
+}
+
+function getRecordingRow(id: number): RecordingRow {
+  const row = db.prepare('SELECT * FROM recordings WHERE id = ?').get(
+    id,
+  ) as RecordingRow | undefined
+  if (!row) throw new Error('Recording not found.')
+  return row
+}
+
+export function createRecording(input: RecordingInput): RecordingSummary {
+  let sessionName: string | null = null
+  if (input.sessionId != null) {
+    const row = db
+      .prepare('SELECT template_name FROM sessions WHERE id = ?')
+      .get(input.sessionId) as { template_name: string } | undefined
+    if (!row) throw new Error('Session not found.')
+    sessionName = row.template_name
+  }
+
+  let exerciseName: string | null = null
+  if (input.exerciseId != null) {
+    const row = db.prepare('SELECT name FROM exercises WHERE id = ?').get(
+      input.exerciseId,
+    ) as { name: string } | undefined
+    if (!row) throw new Error('Exercise not found.')
+    exerciseName = row.name
+  }
+
+  const result = db
+    .prepare(
+      `INSERT INTO recordings
+        (name, mime, data, duration_seconds, session_id, session_name, exercise_id, exercise_name, is_reference, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+    )
+    .run(
+      input.name,
+      input.mime,
+      input.data,
+      input.durationSeconds,
+      input.sessionId ?? null,
+      sessionName,
+      input.exerciseId ?? null,
+      exerciseName,
+      nowIso(),
+    )
+  return getRecording(Number(result.lastInsertRowid)) as RecordingSummary
+}
+
+export function getRecording(id: number): RecordingSummary | null {
+  const row = db.prepare('SELECT * FROM recordings WHERE id = ?').get(
+    id,
+  ) as RecordingRow | undefined
+  return row ? mapRecording(row) : null
+}
+
+export function listRecordings(exerciseId?: number): RecordingSummary[] {
+  const rows = (
+    exerciseId === undefined
+      ? db.prepare('SELECT * FROM recordings ORDER BY created_at DESC, id DESC').all()
+      : db
+          .prepare(
+            'SELECT * FROM recordings WHERE exercise_id = ? ORDER BY created_at DESC, id DESC',
+          )
+          .all(exerciseId)
+  ) as unknown as RecordingRow[]
+  return rows.map(mapRecording)
+}
+
+export function getRecordingData(
+  id: number,
+): { name: string; mime: string; durationSeconds: number; data: Uint8Array } | null {
+  const row = db
+    .prepare('SELECT name, mime, duration_seconds, data FROM recordings WHERE id = ?')
+    .get(id) as
+    | { name: string; mime: string; duration_seconds: number; data: Uint8Array }
+    | undefined
+  if (!row) return null
+  return {
+    name: row.name,
+    mime: row.mime,
+    durationSeconds: row.duration_seconds,
+    data: row.data,
+  }
+}
+
+export function deleteRecording(id: number): void {
+  const updated = db.prepare('DELETE FROM recordings WHERE id = ?').run(id)
+  if (Number(updated.changes) === 0) throw new Error('Recording not found.')
+}
+
+/** Re-point a take at an exercise (or clear the tag with null). */
+export function tagRecordingToExercise(recordingId: number, exerciseId: number | null): void {
+  getRecordingRow(recordingId)
+  let exerciseName: string | null = null
+  if (exerciseId !== null) {
+    const row = db.prepare('SELECT name FROM exercises WHERE id = ?').get(
+      exerciseId,
+    ) as { name: string } | undefined
+    if (!row) throw new Error('Exercise not found.')
+    exerciseName = row.name
+  }
+  db.prepare('UPDATE recordings SET exercise_id = ?, exercise_name = ? WHERE id = ?').run(
+    exerciseId,
+    exerciseName,
+    recordingId,
+  )
+}
+
+/** One reference take per exercise; re-pointing moves the flag. */
+export function setReference(recordingId: number, exerciseId: number): void {
+  transaction(() => {
+    const row = getRecordingRow(recordingId)
+    if (row.exercise_id !== exerciseId) {
+      throw new Error('Recording is not tagged to that exercise.')
+    }
+    db.prepare('UPDATE recordings SET is_reference = 0 WHERE exercise_id = ? AND id <> ?').run(
+      exerciseId,
+      recordingId,
+    )
+    db.prepare('UPDATE recordings SET is_reference = 1 WHERE id = ?').run(recordingId)
+  })
+}
+
+export function getReferenceRecording(exerciseId: number): RecordingSummary | null {
+  const row = db
+    .prepare('SELECT * FROM recordings WHERE exercise_id = ? AND is_reference = 1')
+    .get(exerciseId) as RecordingRow | undefined
+  return row ? mapRecording(row) : null
+}
+
+export function createTrack(input: TrackInput): BackingTrack {
+  const result = db
+    .prepare('INSERT INTO tracks (name, source, url, mime, data, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(
+      input.name,
+      input.source,
+      input.url ?? null,
+      input.mime ?? null,
+      input.data ?? null,
+      nowIso(),
+    )
+  const row = db
+    .prepare('SELECT * FROM tracks WHERE id = ?')
+    .get(Number(result.lastInsertRowid)) as unknown as TrackRow
+  return mapTrack(row)
+}
+
+export function getTrack(id: number): BackingTrack | null {
+  const row = db.prepare('SELECT * FROM tracks WHERE id = ?').get(id) as
+    | TrackRow
+    | undefined
+  return row ? mapTrack(row) : null
+}
+
+export function listTracks(): BackingTrack[] {
+  const rows = db
+    .prepare('SELECT * FROM tracks ORDER BY created_at DESC, id DESC')
+    .all() as unknown as TrackRow[]
+  return rows.map(mapTrack)
+}
+
+/** Null for URL-backed tracks (bytes live on the remote server). */
+export function getTrackData(id: number): { name: string; mime: string; data: Uint8Array } | null {
+  const row = db
+    .prepare("SELECT name, mime, data FROM tracks WHERE id = ? AND source = 'file'")
+    .get(id) as { name: string; mime: string; data: Uint8Array } | undefined
+  if (!row || !row.data) return null
+  return { name: row.name, mime: row.mime, data: row.data }
+}
+
+export function deleteTrack(id: number): void {
+  const updated = db.prepare('DELETE FROM tracks WHERE id = ?').run(id)
+  if (Number(updated.changes) === 0) throw new Error('Track not found.')
 }

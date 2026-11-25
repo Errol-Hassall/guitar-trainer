@@ -1,19 +1,26 @@
 import { createServerFn } from '@tanstack/react-start'
 import * as repo from './repo'
+import { base64ToBytes, bytesToBase64 } from '#/lib/audio'
 import { exportJson, exportMarkdown, sessionsCsv } from '#/lib/export'
 import {
   autoAdvanceSchema,
   completeSectionSchema,
   createExerciseSchema,
+  createRecordingSchema,
   createTemplateSchema,
+  createTrackSchema,
   deleteExerciseSchema,
   deletePresetSchema,
+  deleteRecordingSchema,
   deleteTemplateSchema,
+  deleteTrackSchema,
   exerciseIdSchema,
   importTemplatesSchema,
+  listRecordingsSchema,
   listSessionsSchema,
   logProgressSchema,
   oneThingSchema,
+  recordingIdSchema,
   recentReviewsSchema,
   restoreBackupSchema,
   restDaySchema,
@@ -22,8 +29,11 @@ import {
   saveWeeklyReviewSchema,
   sessionIdSchema,
   setMoodSchema,
+  setReferenceSchema,
   startSessionSchema,
+  tagRecordingSchema,
   templateIdSchema,
+  trackIdSchema,
   updateExerciseSchema,
   updateTemplateSchema,
   weeklyReviewIdSchema,
@@ -210,3 +220,85 @@ export const restoreBackup = createServerFn({ method: 'POST' })
 export const importTemplates = createServerFn({ method: 'POST' })
   .validator(importTemplatesSchema)
   .handler(({ data }) => repo.importTemplates(data.markdown))
+
+// --- Audio tools ------------------------------------------------------------------
+
+export const listRecordings = createServerFn({ method: 'GET' })
+  .validator(listRecordingsSchema)
+  .handler(({ data }) => repo.listRecordings(data.exerciseId))
+
+export const getRecording = createServerFn({ method: 'GET' })
+  .validator(recordingIdSchema)
+  .handler(({ data }) => repo.getRecording(data.id))
+
+export const getRecordingData = createServerFn({ method: 'GET' })
+  .validator(recordingIdSchema)
+  .handler(({ data }) => {
+    const stored = repo.getRecordingData(data.id)
+    if (!stored) return null
+    return { name: stored.name, mime: stored.mime, durationSeconds: stored.durationSeconds, dataB64: bytesToBase64(stored.data) }
+  })
+
+export const createRecording = createServerFn({ method: 'POST' })
+  .validator(createRecordingSchema)
+  .handler(({ data }) => {
+    const { dataB64, ...rest } = data
+    return repo.createRecording({ ...rest, data: base64ToBytes(dataB64) })
+  })
+
+export const deleteRecording = createServerFn({ method: 'POST' })
+  .validator(deleteRecordingSchema)
+  .handler(({ data }) => {
+    repo.deleteRecording(data.id)
+    return true
+  })
+
+export const tagRecording = createServerFn({ method: 'POST' })
+  .validator(tagRecordingSchema)
+  .handler(({ data }) => {
+    repo.tagRecordingToExercise(data.recordingId, data.exerciseId)
+    return true
+  })
+
+export const setReference = createServerFn({ method: 'POST' })
+  .validator(setReferenceSchema)
+  .handler(({ data }) => {
+    repo.setReference(data.recordingId, data.exerciseId)
+    return true
+  })
+
+export const getReferenceRecording = createServerFn({ method: 'GET' })
+  .validator(exerciseIdSchema)
+  .handler(({ data }) => repo.getReferenceRecording(data.id))
+
+export const listTracks = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listTracks(),
+)
+
+export const getTrackData = createServerFn({ method: 'GET' })
+  .validator(trackIdSchema)
+  .handler(({ data }) => {
+    const stored = repo.getTrackData(data.id)
+    if (!stored) return null
+    return { name: stored.name, mime: stored.mime, dataB64: bytesToBase64(stored.data) }
+  })
+
+export const createTrack = createServerFn({ method: 'POST' })
+  .validator(createTrackSchema)
+  .handler(({ data }) => {
+    const { dataB64, ...rest } = data
+    return repo.createTrack({
+      name: rest.name,
+      source: rest.source,
+      url: rest.url,
+      mime: rest.mime,
+      ...(dataB64 ? { data: base64ToBytes(dataB64) } : {}),
+    })
+  })
+
+export const deleteTrack = createServerFn({ method: 'POST' })
+  .validator(deleteTrackSchema)
+  .handler(({ data }) => {
+    repo.deleteTrack(data.id)
+    return true
+  })

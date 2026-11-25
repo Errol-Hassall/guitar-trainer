@@ -19,6 +19,8 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
+  db.exec('DELETE FROM recordings')
+  db.exec('DELETE FROM tracks')
   db.exec('DELETE FROM weekly_reviews')
   db.exec('DELETE FROM exercise_progress')
   db.exec('DELETE FROM exercises')
@@ -506,5 +508,112 @@ describe('workflow (streaks, mood, reviews)', () => {
     const restoredSession = repo.getSession(sessionId)
     expect(restoredSession?.mood).toBe('drained')
     expect(restoredSession?.templateName).toBe('Daily 60')
+  })
+})
+
+describe('recordings', () => {
+  const timedInput = {
+    name: 'Picking drill',
+    hasTiming: true,
+    difficulty: 3,
+    tags: ['Technique'],
+    tabText: '',
+  }
+
+  function makeTaggedRecording(): number {
+    const sessionId = repo.startSession({
+      templateId: dailyTemplateId(),
+      kind: 'full',
+      theme: 'Picking & Pulse',
+    })
+    repo.completeSession(sessionId)
+    const exerciseId = repo.createExercise(timedInput).id
+    return repo.createRecording({
+      name: 'Take 1',
+      mime: 'audio/webm',
+      data: new Uint8Array([1, 2, 3]),
+      durationSeconds: 5,
+      sessionId,
+      exerciseId,
+    }).id
+  }
+
+  it('snapshots the session and exercise names at create time', () => {
+    const id = makeTaggedRecording()
+    const recording = repo.getRecording(id)
+    expect(recording?.sessionName).toBe('Daily 60')
+    expect(recording?.exerciseName).toBe('Picking drill')
+    expect(recording?.durationSeconds).toBe(5)
+  })
+
+  it('round-trips the stored bytes', () => {
+    const id = makeTaggedRecording()
+    const data = repo.getRecordingData(id)
+    expect(Array.from(data!.data)).toEqual([1, 2, 3])
+    expect(repo.getRecordingData(99_999)).toBeNull()
+  })
+
+  it('filters by exercise and deletes', () => {
+    const id = makeTaggedRecording()
+    const otherExerciseId = repo.createExercise(timedInput).id
+    expect(repo.listRecordings(otherExerciseId)).toHaveLength(0)
+    expect(repo.listRecordings()).toHaveLength(1)
+
+    repo.deleteRecording(id)
+    expect(repo.getRecording(id)).toBeNull()
+  })
+
+  it('keeps a single reference take per exercise', () => {
+    const first = makeTaggedRecording()
+    const second = repo.createRecording({
+      name: 'Take 2',
+      mime: 'audio/webm',
+      data: new Uint8Array([9]),
+      durationSeconds: 7,
+    }).id
+
+    // A recording with no exercise cannot be a reference.
+    expect(() => repo.setReference(second, 1)).toThrow(/not tagged/i)
+
+    const firstExerciseId = repo.getRecording(first)!.exerciseId!
+    repo.setReference(first, firstExerciseId)
+    expect(repo.getRecording(first)?.isReference).toBe(true)
+
+    // Tag the second take to the same exercise and re-point the reference.
+    repo.tagRecordingToExercise(second, firstExerciseId)
+    repo.setReference(second, firstExerciseId)
+    expect(repo.getRecording(second)?.isReference).toBe(true)
+    expect(repo.getRecording(first)?.isReference).toBe(false)
+
+    expect(() => repo.setReference(99_999, firstExerciseId)).toThrow(/not found/i)
+  })
+})
+
+describe('tracks', () => {
+  it('stores and round-trips a file-backed track', () => {
+    const id = repo.createTrack({
+      name: 'Riff',
+      source: 'file',
+      data: new Uint8Array([7, 8]),
+      mime: 'audio/mpeg',
+    }).id
+    const data = repo.getTrackData(id)
+    expect(Array.from(data!.data)).toEqual([7, 8])
+    expect(repo.listTracks().map((track) => track.name)).toContain('Riff')
+
+    repo.deleteTrack(id)
+    expect(repo.getTrack(id)).toBeNull()
+  })
+
+  it('stores a URL-backed track without bytes', () => {
+    const id = repo.createTrack({
+      name: 'Demo',
+      source: 'url',
+      url: 'https://example.com/a.mp3',
+    }).id
+    const track = repo.getTrack(id)
+    expect(track?.source).toBe('url')
+    expect(track?.url).toBe('https://example.com/a.mp3')
+    expect(repo.getTrackData(id)).toBeNull()
   })
 })

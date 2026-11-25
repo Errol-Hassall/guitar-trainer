@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (Phases 1–4)
+## Features (Phases 1–5)
 
 **Metronome**
 
@@ -30,6 +30,15 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Timed exercises log max clean BPM, average BPM, duration and clean streak; a dependency-free SVG chart shows max clean BPM over time
 - Untimed exercises log a self rating (1–5), duration and notes
 - Progress logs attach to the active session when one is running, so history stays linked
+
+**Audio tools**
+
+- One-tap recording from the microphone, auto-tagged to the active session and any chosen exercise; waveform playback with an optional metronome click overlay at any BPM
+- A/B compare: pick take A and take B and they play back-to-back
+- One reference take per exercise (star a take; it appears as a chip on the exercise page)
+- Backing tracks from an audio file or an http(s) URL; tempo 50–200% via time-stretch that preserves pitch (practice-grade WSOLA), plus an independent −12…+12 semitone shift
+- A/B loop points with looping, a gradual speed ramp across passes, and a track-volume slider for fading the track under your playing
+- Chromatic tuner (YIN pitch detection) with an optional target note so bends can be checked in cents
 
 **Workflow & data**
 
@@ -112,6 +121,10 @@ snapshot the template's name and sections at start time, so editing a template
 never rewrites history; they also carry an optional mood. Progress rows
 optionally reference the active session (`ON DELETE SET NULL`) and cascade with
 their exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
+Recordings and backing tracks live in `recordings` / `tracks` as audio BLOBs,
+tagged to sessions/exercises by name snapshot with `SET NULL` FKs; they are
+deliberately excluded from the v1 JSON backup, so restoring an old backup
+leaves existing audio untouched.
 
 ## Testing
 
@@ -119,12 +132,13 @@ their exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
 bun run test:all   # the gate: typecheck → lint → vitest (unit + integration) → Playwright e2e
 ```
 
-- **Unit** (`tests/unit/`): pure metronome/session logic, progress-graph points
-  and zod schemas.
+- **Unit** (`tests/unit/`): pure metronome/session logic, progress-graph points,
+  WSOLA time-stretch / YIN pitch detection and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
   session lifecycle, clamping, rest days, presets, exercises + progress, the
-  focus note, streak dates, moods, weekly reviews and full backup restore.
+  focus note, streak dates, moods, weekly reviews, recordings/tracks and full
+  backup restore.
 - **E2E** (`e2e/`, Playwright): production build served on `127.0.0.1:3100`
   with a fresh throwaway DB; 1 worker, no retries, traces/screenshots/HTML
   report on failure. System Chromium is used when present, otherwise the
@@ -142,12 +156,16 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
-Phases 5–8 of the original spec are out of scope: speed trainer, focus mode,
-audio attachment / reference takes (Phase 5), automatic Sunday theme selection
-and everything beyond the metronome, sessions, exercises and workflow. Also
-skipped in Phase 4: full offline data access (the PWA shell installs and loads
-from cache, but data changes need the server running — an IndexedDB/WASM mirror
-would be a separate project), File System Access API folder coexistence, and
-Markdown import of session logs (import covers templates only). The
+Phases 6–8 of the original spec are out of scope: speed trainer, focus mode,
+automatic Sunday theme selection and everything beyond the metronome, sessions,
+exercises, audio tools and workflow. Also skipped in Phase 5: trimming,
+multi-track mixing and waveform zoom; live mic-into-track mixing (the "crossfade"
+is a track-side gain slider); URL tracks that do not send CORS headers cannot be
+loaded (surfaced as an error); pitch shift is practice-grade (WSOLA stretch plus
+playback-rate composition), not studio-grade. Also skipped in Phase 4: full
+offline data access (the PWA shell installs and loads from cache, but data
+changes need the server running — an IndexedDB/WASM mirror would be a separate
+project), File System Access API folder coexistence, and Markdown import of
+session logs (import covers templates only). The
 server-function layer is deliberately kept as a thin validated boundary so a
 future auth layer can slot in without restructuring.

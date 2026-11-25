@@ -14,6 +14,9 @@ import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MetronomeRouteImport } from './routes/metronome'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as RecordingsRouteImport } from './routes/recordings'
+import { Route as TracksRouteImport } from './routes/tracks'
+import { Route as TunerRouteImport } from './routes/tuner'
 import { Route as ExercisesIndexRouteImport } from './routes/exercises/index'
 import { Route as ExercisesExerciseIdRouteImport } from './routes/exercises/$exerciseId'
 import { Route as ExercisesNewRouteImport } from './routes/exercises/new'
@@ -45,6 +48,21 @@ const MetronomeRoute = MetronomeRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecordingsRoute = RecordingsRouteImport.update({
+  id: '/recordings',
+  path: '/recordings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TracksRoute = TracksRouteImport.update({
+  id: '/tracks',
+  path: '/tracks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TunerRoute = TunerRouteImport.update({
+  id: '/tuner',
+  path: '/tuner',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExercisesIndexRoute = ExercisesIndexRouteImport.update({
@@ -89,6 +107,9 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
+  '/recordings': typeof RecordingsRoute
+  '/tracks': typeof TracksRoute
+  '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -103,6 +124,9 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
+  '/recordings': typeof RecordingsRoute
+  '/tracks': typeof TracksRoute
+  '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -118,6 +142,9 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
+  '/recordings': typeof RecordingsRoute
+  '/tracks': typeof TracksRoute
+  '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -134,6 +161,9 @@ export interface FileRouteTypes {
     | '/history'
     | '/metronome'
     | '/progress'
+    | '/recordings'
+    | '/tracks'
+    | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -148,6 +178,9 @@ export interface FileRouteTypes {
     | '/history'
     | '/metronome'
     | '/progress'
+    | '/recordings'
+    | '/tracks'
+    | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -162,6 +195,9 @@ export interface FileRouteTypes {
     | '/history'
     | '/metronome'
     | '/progress'
+    | '/recordings'
+    | '/tracks'
+    | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -177,6 +213,9 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   MetronomeRoute: typeof MetronomeRoute
   ProgressRoute: typeof ProgressRoute
+  RecordingsRoute: typeof RecordingsRoute
+  TracksRoute: typeof TracksRoute
+  TunerRoute: typeof TunerRoute
   ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
   ExercisesNewRoute: typeof ExercisesNewRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
@@ -221,6 +260,27 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recordings': {
+      id: '/recordings'
+      path: '/recordings'
+      fullPath: '/recordings'
+      preLoaderRoute: typeof RecordingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tracks': {
+      id: '/tracks'
+      path: '/tracks'
+      fullPath: '/tracks'
+      preLoaderRoute: typeof TracksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tuner': {
+      id: '/tuner'
+      path: '/tuner'
+      fullPath: '/tuner'
+      preLoaderRoute: typeof TunerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exercises/': {
@@ -281,6 +341,9 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   MetronomeRoute: MetronomeRoute,
   ProgressRoute: ProgressRoute,
+  RecordingsRoute: RecordingsRoute,
+  TracksRoute: TracksRoute,
+  TunerRoute: TunerRoute,
   ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,
   ExercisesNewRoute: ExercisesNewRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,

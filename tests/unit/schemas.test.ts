@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   completeSectionSchema,
+  createRecordingSchema,
+  createTrackSchema,
   exerciseInputSchema,
   listSessionsSchema,
   logProgressSchema,
@@ -8,6 +10,7 @@ import {
   savePresetSchema,
   saveWeeklyReviewSchema,
   setMoodSchema,
+  setReferenceSchema,
   startSessionSchema,
   templateInputSchema,
 } from '#/server/schemas'
@@ -237,5 +240,82 @@ describe('restoreBackupSchema', () => {
       ],
     }
     expect(restoreBackupSchema.safeParse(badSession).success).toBe(false)
+  })
+})
+
+describe('createRecordingSchema', () => {
+  const valid = {
+    name: 'Take 1',
+    mime: 'audio/webm;codecs=opus',
+    dataB64: 'SGVsbG8=',
+    durationSeconds: 5,
+  }
+
+  it('accepts a valid recording with optional tags', () => {
+    expect(createRecordingSchema.safeParse(valid).success).toBe(true)
+    expect(
+      createRecordingSchema.safeParse({ ...valid, sessionId: 1, exerciseId: 2 }).success,
+    ).toBe(true)
+  })
+
+  it('rejects empty names, bad base64 and oversized payloads', () => {
+    expect(createRecordingSchema.safeParse({ ...valid, name: '   ' }).success).toBe(false)
+    expect(
+      createRecordingSchema.safeParse({ ...valid, dataB64: 'not!base64' }).success,
+    ).toBe(false)
+    expect(
+      createRecordingSchema.safeParse({ ...valid, dataB64: 'A'.repeat(20_000_001) })
+        .success,
+    ).toBe(false)
+  })
+
+  it('rejects negative or fractional durations', () => {
+    expect(createRecordingSchema.safeParse({ ...valid, durationSeconds: -1 }).success).toBe(
+      false,
+    )
+    expect(createRecordingSchema.safeParse({ ...valid, durationSeconds: 1.5 }).success).toBe(
+      false,
+    )
+  })
+})
+
+describe('createTrackSchema', () => {
+  it('accepts a file-backed track', () => {
+    expect(
+      createTrackSchema.safeParse({
+        name: 'Riff',
+        source: 'file',
+        dataB64: 'SGVsbG8=',
+        mime: 'audio/mpeg',
+      }).success,
+    ).toBe(true)
+  })
+
+  it('accepts a URL-backed track', () => {
+    expect(
+      createTrackSchema.safeParse({
+        name: 'Demo',
+        source: 'url',
+        url: 'https://example.com/track.mp3',
+      }).success,
+    ).toBe(true)
+  })
+
+  it('rejects a file track without data and a URL track with a bad scheme', () => {
+    expect(
+      createTrackSchema.safeParse({ name: 'Riff', source: 'file' }).success,
+    ).toBe(false)
+    expect(
+      createTrackSchema.safeParse({ name: 'Demo', source: 'url', url: 'ftp://example.com/a' })
+        .success,
+    ).toBe(false)
+  })
+})
+
+describe('setReferenceSchema', () => {
+  it('requires both a recording and an exercise id', () => {
+    expect(setReferenceSchema.safeParse({ recordingId: 1, exerciseId: 2 }).success).toBe(true)
+    expect(setReferenceSchema.safeParse({ recordingId: 1 }).success).toBe(false)
+    expect(setReferenceSchema.safeParse({ exerciseId: 2 }).success).toBe(false)
   })
 })

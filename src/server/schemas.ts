@@ -142,6 +142,67 @@ export const recentReviewsSchema = z.object({
   limit: z.number().int().min(1).max(50).default(5),
 })
 
+// --- Audio tools ------------------------------------------------------------------
+
+/** ~15MB of audio; base64 inflates by 4/3. */
+const AUDIO_B64_MAX = 20_000_000
+
+export const createRecordingSchema = z.object({
+  name: z.string().trim().min(1, 'Recording name is required').max(60),
+  mime: z.string().min(1).max(120),
+  dataB64: z.base64().min(1).max(AUDIO_B64_MAX),
+  durationSeconds: z.number().int().min(0).max(86_400),
+  sessionId: idSchema.nullable().optional(),
+  exerciseId: idSchema.nullable().optional(),
+})
+
+export const recordingIdSchema = z.object({ id: idSchema })
+
+export const deleteRecordingSchema = z.object({ id: idSchema })
+
+export const tagRecordingSchema = z.object({
+  recordingId: idSchema,
+  exerciseId: idSchema.nullable(),
+})
+
+export const setReferenceSchema = z.object({
+  recordingId: idSchema,
+  exerciseId: idSchema,
+})
+
+export const listRecordingsSchema = z.object({
+  exerciseId: idSchema.optional(),
+})
+
+const httpUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  }, 'Track URL must be an http(s) address')
+
+export const createTrackSchema = z
+  .object({
+    name: z.string().trim().min(1, 'Track name is required').max(60),
+    source: z.enum(['file', 'url']),
+    dataB64: z.base64().max(AUDIO_B64_MAX).optional(),
+    mime: z.string().min(1).max(120).optional(),
+    url: httpUrlSchema.optional(),
+  })
+  .refine((track) => track.source !== 'file' || Boolean(track.dataB64 && track.mime), {
+    message: 'File tracks need audio data and a mime type',
+    path: ['dataB64'],
+  })
+  .refine((track) => track.source !== 'url' || Boolean(track.url), {
+    message: 'URL tracks need an http(s) url',
+    path: ['url'],
+  })
+
+export const trackIdSchema = z.object({ id: idSchema })
+
+export const deleteTrackSchema = z.object({ id: idSchema })
+
 const exportSectionSchema = z.object({
   name: z.string().min(1).max(40),
   minutes: z.number().int().min(1).max(180),

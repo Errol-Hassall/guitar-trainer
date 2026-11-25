@@ -1,13 +1,14 @@
 import { useState } from 'react'
-import { createFileRoute, notFound, useRouter } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router'
 import { Pencil, Trash2 } from 'lucide-react'
-import type { Exercise, ExerciseProgress, UpdateExerciseInput } from '#/lib/types'
+import type { Exercise, ExerciseProgress, RecordingSummary, UpdateExerciseInput } from '#/lib/types'
 import { bpmGraphPoints } from '#/lib/progress'
 import { formatClock, formatUtcDateTime } from '#/lib/sessions'
 import {
   deleteExercise,
   getActiveSession,
   getExercise,
+  getReferenceRecording,
   listProgress,
   logProgress,
   updateExercise,
@@ -24,13 +25,14 @@ export const Route = createFileRoute('/exercises/$exerciseId')({
   component: ExercisePage,
   loader: async ({ params }) => {
     const id = Number(params.exerciseId)
-    const [exercise, progress, active] = await Promise.all([
+    const [exercise, progress, active, referenceTake] = await Promise.all([
       getExercise({ data: { id } }),
       listProgress({ data: { id } }),
       getActiveSession(),
+      getReferenceRecording({ data: { id } }),
     ])
     if (!exercise) throw notFound()
-    return { exercise, progress, activeSessionName: active?.templateName ?? null }
+    return { exercise, progress, activeSessionName: active?.templateName ?? null, referenceTake }
   },
 })
 
@@ -38,11 +40,13 @@ interface LoaderData {
   exercise: Exercise
   progress: ExerciseProgress[]
   activeSessionName: string | null
+  referenceTake: RecordingSummary | null
 }
 
 function ExercisePage() {
   const router = useRouter()
-  const { exercise, progress, activeSessionName } = Route.useLoaderData() as LoaderData
+  const { exercise, progress, activeSessionName, referenceTake } =
+    Route.useLoaderData() as LoaderData
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -140,6 +144,24 @@ function ExercisePage() {
               </div>
             </Card>
           )}
+
+          {referenceTake ? (
+            <Card title="Reference take" description="The take you are measuring against.">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium">{referenceTake.name}</span>
+                <span className="text-muted tabular-nums">
+                  {formatClock(referenceTake.durationSeconds)}
+                </span>
+                <Link
+                  to="/recordings"
+                  search={{ exercise: exercise.id }}
+                  className="ml-auto text-accent underline"
+                >
+                  Open recordings
+                </Link>
+              </div>
+            </Card>
+          ) : null}
 
           <Card title="Progress" description={exercise.hasTiming ? 'Max clean BPM over time.' : 'Completions and self-ratings.'}>
             <div data-log-count={progress.length} className="flex flex-col gap-4">

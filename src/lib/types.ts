@@ -226,6 +226,47 @@ export interface LogProgressInput {
   notes?: string
 }
 
+export interface RecordingSummary {
+  id: number
+  name: string
+  mime: string
+  durationSeconds: number
+  sessionId: number | null
+  sessionName: string | null
+  exerciseId: number | null
+  exerciseName: string | null
+  isReference: boolean
+  createdAt: string
+}
+
+/** Repo-level input; the API layer decodes `dataB64` into `data` first. */
+export interface RecordingInput {
+  name: string
+  mime: string
+  data: Uint8Array
+  durationSeconds: number
+  sessionId?: number | null
+  exerciseId?: number | null
+}
+
+export interface BackingTrack {
+  id: number
+  name: string
+  source: 'file' | 'url'
+  url: string | null
+  mime: string | null
+  createdAt: string
+}
+
+/** Repo-level input; the API layer decodes `dataB64` into `data` first. */
+export interface TrackInput {
+  name: string
+  source: 'file' | 'url'
+  data?: Uint8Array
+  mime?: string
+  url?: string
+}
+
 /** Shape of the JSON backup file (versioned; restore validates against this). */
 export interface AppExport {
   version: 1

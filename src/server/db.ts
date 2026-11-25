@@ -116,6 +116,33 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE recordings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    mime TEXT NOT NULL,
+    data BLOB NOT NULL,
+    duration_seconds INTEGER NOT NULL DEFAULT 0 CHECK (duration_seconds >= 0),
+    session_id INTEGER REFERENCES sessions(id) ON DELETE SET NULL,
+    session_name TEXT,
+    exercise_id INTEGER REFERENCES exercises(id) ON DELETE SET NULL,
+    exercise_name TEXT,
+    is_reference INTEGER NOT NULL DEFAULT 0 CHECK (is_reference IN (0, 1)),
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX idx_recordings_exercise ON recordings(exercise_id);
+  CREATE INDEX idx_recordings_created ON recordings(created_at DESC);
+
+  CREATE TABLE tracks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('file', 'url')),
+    url TEXT,
+    mime TEXT,
+    data BLOB,
+    created_at TEXT NOT NULL
+  );
+  `,
 ]
 
 export const databasePath = resolve(
