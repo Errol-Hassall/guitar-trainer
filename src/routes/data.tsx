@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import type { AppExport } from '#/lib/types'
-import { getCsvExport, getJsonExport, getMarkdownExport, importTemplates, restoreBackup } from '#/server/api'
+import { getCsvExport, getJsonExport, getMarkdownExport, importExercises, importTemplates, restoreBackup } from '#/server/api'
 import { Button } from '#/components/ui/button'
 import { Card } from '#/components/ui/card'
 import { Field, controlClass } from '#/components/ui/field'
@@ -57,6 +57,27 @@ function DataPage() {
         created > 0
           ? `Imported ${created} template${created === 1 ? '' : 's'} from ${file.name}.`
           : 'No new templates found in that file.',
+      )
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Import failed.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function handleImportExercises(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setBusy('import-exercises')
+    setError(null)
+    setStatus(null)
+    try {
+      const created = await importExercises({ data: { markdown: await file.text() } })
+      setStatus(
+        created > 0
+          ? `Imported ${created} exercise${created === 1 ? '' : 's'} from ${file.name}.`
+          : 'No new exercises found in that file.',
       )
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Import failed.')
@@ -150,6 +171,18 @@ function DataPage() {
               type="file"
               accept=".md,.markdown,text/markdown"
               onChange={handleImportMarkdown}
+              className={`${controlClass} file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-ink`}
+            />
+          </Field>
+        </Card>
+
+        <Card title="Import exercise pack" description="Reads the Exercises section of a Guitar Trainer markdown export (or a file in that format). Existing names are skipped.">
+          <Field label="Markdown file" htmlFor="import-exercises">
+            <input
+              id="import-exercises"
+              type="file"
+              accept=".md,.markdown,text/markdown"
+              onChange={handleImportExercises}
               className={`${controlClass} file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-ink`}
             />
           </Field>

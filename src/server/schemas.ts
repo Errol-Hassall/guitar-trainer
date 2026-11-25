@@ -134,6 +134,19 @@ export const importTemplatesSchema = z.object({
   markdown: z.string().min(1).max(200_000),
 })
 
+export const importExercisesSchema = z.object({
+  markdown: z.string().min(1).max(200_000),
+})
+
+export const learningPathIdSchema = z.object({
+  id: idSchema,
+})
+
+export const toggleStepCompletionSchema = z.object({
+  stepId: idSchema,
+  completed: z.boolean(),
+})
+
 export const weeklyReviewIdSchema = z.object({
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 })
@@ -246,6 +259,8 @@ const exportExerciseSchema = z.object({
   difficulty: z.number().int().min(1).max(5),
   tags: z.array(z.string().max(24)).max(8),
   tabText: z.string().max(4000),
+  // Defaults so backups from before Phase 6 still restore.
+  isBuiltin: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

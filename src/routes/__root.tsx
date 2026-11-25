@@ -71,6 +71,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 { to: '/tuner', label: 'Tuner' },
                 { to: '/templates', label: 'Templates' },
                 { to: '/exercises', label: 'Exercises' },
+                { to: '/learning', label: 'Learning' },
                 { to: '/history', label: 'History' },
                 { to: '/progress', label: 'Progress' },
                 { to: '/data', label: 'Data' },

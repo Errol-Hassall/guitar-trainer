@@ -19,6 +19,9 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
+  db.exec('DELETE FROM path_step_state')
+  db.exec('DELETE FROM path_steps')
+  db.exec('DELETE FROM learning_paths')
   db.exec('DELETE FROM recordings')
   db.exec('DELETE FROM tracks')
   db.exec('DELETE FROM weekly_reviews')
@@ -615,5 +618,108 @@ describe('tracks', () => {
     expect(track?.source).toBe('url')
     expect(track?.url).toBe('https://example.com/a.mp3')
     expect(repo.getTrackData(id)).toBeNull()
+  })
+})
+
+describe('learning paths', () => {
+  function firstPathId(): number {
+    const path = repo.listLearningPaths()[0]
+    if (!path) throw new Error('seed data missing')
+    return path.id
+  }
+
+  it('seeds built-in paths with ordered, chained steps', () => {
+    const paths = repo.listLearningPaths()
+    expect(paths.length).toBeGreaterThanOrEqual(3)
+    for (const path of paths) {
+      expect(path.isBuiltin).toBe(true)
+      expect(path.stepCount).toBeGreaterThanOrEqual(2)
+    }
+
+    const detail = repo.getLearningPath(firstPathId())!
+    expect(detail.steps.map((step) => step.position)).toEqual([1, 2, 3])
+    // Chain: every step after the first requires the previous one.
+    for (let i = 1; i < detail.steps.length; i += 1) {
+      expect(detail.steps[i].requiresStepId).toBe(detail.steps[i - 1].id)
+    }
+    expect(detail.steps[0].unlocked).toBe(true)
+    expect(detail.steps[1].unlocked).toBe(false)
+  })
+
+  it('completing a step unlocks its dependent and counts progress', () => {
+    const pathId = firstPathId()
+    const detail = repo.getLearningPath(pathId)!
+    const [first, second] = detail.steps
+    expect(detail.completedSteps).toBe(0)
+
+    repo.toggleStepCompletion(first.id, true)
+    const after = repo.getLearningPath(pathId)!
+    expect(after.steps.find((step) => step.id === first.id)?.completed).toBe(true)
+    expect(after.steps.find((step) => step.id === second.id)?.unlocked).toBe(true)
+    expect(repo.listLearningPaths().find((value) => value.id === pathId)?.completedSteps).toBe(1)
+  })
+
+  it('rejects completing a locked step', () => {
+    const detail = repo.getLearningPath(firstPathId())!
+    expect(() => repo.toggleStepCompletion(detail.steps[2].id, true)).toThrow(/locked/i)
+  })
+
+  it('rejects un-completing a step that completed steps depend on', () => {
+    const pathId = firstPathId()
+    const detail = repo.getLearningPath(pathId)!
+    const [first, second] = detail.steps
+    repo.toggleStepCompletion(first.id, true)
+    repo.toggleStepCompletion(second.id, true)
+    expect(() => repo.toggleStepCompletion(first.id, false)).toThrow(/depend on this one/i)
+    // Once the dependent is cleared, un-completing works.
+    repo.toggleStepCompletion(second.id, false)
+    expect(() => repo.toggleStepCompletion(first.id, false)).not.toThrow()
+  })
+})
+
+describe('built-in exercises', () => {
+  it('seeds common built-in exercises', () => {
+    const builtins = repo.listExercises().filter((exercise) => exercise.isBuiltin)
+    expect(builtins.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('guards update and delete of built-in exercises', () => {
+    const builtin = repo.listExercises().find((exercise) => exercise.isBuiltin)!
+    expect(() =>
+      repo.updateExercise({
+        id: builtin.id,
+        name: 'Hacked',
+        hasTiming: builtin.hasTiming,
+        difficulty: builtin.difficulty,
+        tags: builtin.tags,
+        tabText: builtin.tabText,
+      }),
+    ).toThrow(/built-in/i)
+    expect(() => repo.deleteExercise(builtin.id)).toThrow(/built-in/i)
+  })
+})
+
+describe('importExercises', () => {
+  const pack = [
+    '## Exercises',
+    '### Pack Drill (timed · difficulty 2)',
+    'Tags: pack',
+    '',
+  ].join('\n')
+
+  it('creates exercises from the Exercises section and skips existing names', () => {
+    expect(repo.importExercises(pack)).toBe(1)
+    expect(repo.importExercises(pack)).toBe(0)
+    const created = repo.listExercises().find((exercise) => exercise.name === 'Pack Drill')
+    expect(created?.hasTiming).toBe(true)
+    expect(created?.difficulty).toBe(2)
+    expect(created?.tags).toEqual(['pack'])
+  })
+
+  it('skips names that collide with built-ins and returns zero without a section', () => {
+    const builtin = repo.listExercises().find((exercise) => exercise.isBuiltin)!
+    const markdown = `## Exercises\n### ${builtin.name} (untimed · difficulty 1)\n`
+    expect(repo.importExercises(markdown)).toBe(0)
+    expect(repo.importExercises('# Export\n## Templates\n')).toBe(0)
   })
 })

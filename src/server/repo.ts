@@ -7,6 +7,8 @@ import type {
   ExerciseInput,
   ExerciseProgress,
   ExerciseSummary,
+  LearningPathDetail,
+  LearningPathSummary,
   LogProgressInput,
   MetronomePreset,
   Mood,
@@ -26,7 +28,8 @@ import type {
   UpdateTemplateInput,
   WeeklyReview,
 } from '#/lib/types'
-import { parseTemplatesFromMarkdown } from '#/lib/export'
+import { parseExercisesFromMarkdown, parseTemplatesFromMarkdown } from '#/lib/export'
+import { isStepUnlocked } from '#/lib/learning'
 import { defaultAccents, resizeAccents } from '#/lib/metronome'
 import { plannedSeconds } from '#/lib/sessions'
 
@@ -91,8 +94,31 @@ interface ExerciseRow {
   difficulty: number
   tags: string
   tab_text: string
+  is_builtin: number
   created_at: string
   updated_at: string
+}
+
+interface LearningPathRow {
+  id: number
+  slug: string | null
+  name: string
+  description: string
+  theme: Theme
+  position: number
+  is_builtin: number
+  created_at: string
+}
+
+interface PathStepRow {
+  id: number
+  path_id: number
+  position: number
+  title: string
+  description: string
+  external_url: string | null
+  exercise_id: number | null
+  requires_step_id: number | null
 }
 
 interface ProgressRow {
@@ -127,6 +153,7 @@ function mapExercise(row: ExerciseRow): Exercise {
     difficulty: row.difficulty,
     tags: parseTags(row.tags),
     tabText: row.tab_text,
+    isBuiltin: row.is_builtin === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -591,7 +618,7 @@ export function listExercises(): ExerciseSummary[] {
                 WHERE p.exercise_id = e.id AND p.self_rating IS NOT NULL
                 ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_rating
        FROM exercises e
-       ORDER BY name`,
+       ORDER BY is_builtin DESC, name`,
     )
     .all() as unknown as (ExerciseRow & {
     log_count: number
@@ -635,7 +662,7 @@ export function createExercise(input: ExerciseInput): Exercise {
 }
 
 export function updateExercise(input: UpdateExerciseInput): Exercise {
-  getExerciseRow(input.id)
+  assertBuiltinGuard(getExerciseRow(input.id).is_builtin, 'exercise')
   db.prepare(
     `UPDATE exercises SET name = ?, has_timing = ?, difficulty = ?, tags = ?, tab_text = ?, updated_at = ?
      WHERE id = ?`,
@@ -652,7 +679,7 @@ export function updateExercise(input: UpdateExerciseInput): Exercise {
 }
 
 export function deleteExercise(id: number): void {
-  getExerciseRow(id)
+  assertBuiltinGuard(getExerciseRow(id).is_builtin, 'exercise')
   db.prepare('DELETE FROM exercises WHERE id = ?').run(id)
 }
 
@@ -707,6 +734,126 @@ export function importTemplates(markdown: string): number {
     created += 1
   }
   return created
+}
+
+export function importExercises(markdown: string): number {
+  const parsed = parseExercisesFromMarkdown(markdown)
+  let created = 0
+  for (const exercise of parsed) {
+    // Idempotent: skip anything with the same name (built-in or custom).
+    if (db.prepare('SELECT id FROM exercises WHERE name = ?').get(exercise.name)) continue
+    createExercise({ ...exercise })
+    created += 1
+  }
+  return created
+}
+
+// --- Learning paths -------------------------------------------------------------
+
+function completedStepIds(): Set<number> {
+  const rows = db.prepare('SELECT step_id FROM path_step_state').all() as {
+    step_id: number
+  }[]
+  return new Set(rows.map((row) => row.step_id))
+}
+
+export function listLearningPaths(): LearningPathSummary[] {
+  const rows = db
+    .prepare(
+      `SELECT p.*,
+              (SELECT COUNT(*) FROM path_steps s WHERE s.path_id = p.id) AS step_count,
+              (SELECT COUNT(*) FROM path_steps s
+                JOIN path_step_state st ON st.step_id = s.id
+                WHERE s.path_id = p.id) AS completed_steps
+       FROM learning_paths p
+       ORDER BY position, name`,
+    )
+    .all() as unknown as (LearningPathRow & {
+    step_count: number
+    completed_steps: number
+  })[]
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    theme: row.theme,
+    isBuiltin: row.is_builtin === 1,
+    stepCount: row.step_count,
+    completedSteps: row.completed_steps,
+  }))
+}
+
+export function getLearningPath(id: number): LearningPathDetail | null {
+  const path = db.prepare('SELECT * FROM learning_paths WHERE id = ?').get(
+    id,
+  ) as LearningPathRow | undefined
+  if (!path) return null
+
+  const steps = (
+    db
+      .prepare(
+        `SELECT s.*, e.name AS exercise_name
+         FROM path_steps s
+         LEFT JOIN exercises e ON e.id = s.exercise_id
+         WHERE s.path_id = ?
+         ORDER BY s.position`,
+      )
+      .all(id) as unknown as (PathStepRow & { exercise_name: string | null })[]
+  )
+  const completed = completedStepIds()
+  const titles = new Map(steps.map((step) => [step.id, step.title]))
+
+  return {
+    id: path.id,
+    name: path.name,
+    description: path.description,
+    theme: path.theme,
+    isBuiltin: path.is_builtin === 1,
+    stepCount: steps.length,
+    completedSteps: steps.filter((step) => completed.has(step.id)).length,
+    steps: steps.map((step) => ({
+      id: step.id,
+      position: step.position,
+      title: step.title,
+      description: step.description,
+      externalUrl: step.external_url,
+      exerciseId: step.exercise_id,
+      exerciseName: step.exercise_name,
+      requiresStepId: step.requires_step_id,
+      requiresTitle: step.requires_step_id === null ? null : titles.get(step.requires_step_id) ?? null,
+      completed: completed.has(step.id),
+      unlocked: isStepUnlocked(step.requires_step_id, completed),
+    })),
+  }
+}
+
+export function toggleStepCompletion(stepId: number, completed: boolean): void {
+  const step = db.prepare('SELECT * FROM path_steps WHERE id = ?').get(
+    stepId,
+  ) as PathStepRow | undefined
+  if (!step) throw new Error('Step not found.')
+
+  if (completed) {
+    if (!isStepUnlocked(step.requires_step_id, completedStepIds())) {
+      throw new Error('This step is locked until its prerequisite is complete.')
+    }
+    db.prepare(
+      'INSERT OR REPLACE INTO path_step_state (step_id, completed_at) VALUES (?, ?)',
+    ).run(stepId, nowIso())
+    return
+  }
+
+  const dependents = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM path_steps
+       WHERE requires_step_id = ? AND id IN (SELECT step_id FROM path_step_state)`,
+    )
+    .get(stepId) as { n: number }
+  if (Number(dependents.n) > 0) {
+    throw new Error('Completed steps depend on this one — clear them first.')
+  }
+  db.prepare('DELETE FROM path_step_state WHERE step_id = ?').run(stepId)
 }
 
 // --- Workflow: streak dates, mood, weekly reviews -----------------------------
@@ -899,7 +1046,7 @@ export function restoreBackup(data: AppExport): void {
     }
 
     const insertExercise = db.prepare(
-      'INSERT INTO exercises (id, name, has_timing, difficulty, tags, tab_text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO exercises (id, name, has_timing, difficulty, tags, tab_text, is_builtin, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
     for (const exercise of data.exercises) {
       insertExercise.run(
@@ -909,6 +1056,7 @@ export function restoreBackup(data: AppExport): void {
         exercise.difficulty,
         JSON.stringify(exercise.tags),
         exercise.tabText,
+        exercise.isBuiltin ? 1 : 0,
         exercise.createdAt,
         exercise.updatedAt,
       )

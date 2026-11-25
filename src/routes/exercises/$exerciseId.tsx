@@ -70,7 +70,9 @@ function ExercisePage() {
         description={`${exercise.hasTiming ? 'Timed' : 'Untimed'} · Difficulty ${exercise.difficulty}/5`}
         actions={
           <div className="flex items-center gap-2">
-            {confirmingDelete ? (
+            {exercise.isBuiltin ? (
+              <Badge variant="accent">Built-in · read-only</Badge>
+            ) : confirmingDelete ? (
               <>
                 <Button variant="danger" size="sm" onClick={() => void handleDelete()}>
                   Confirm delete

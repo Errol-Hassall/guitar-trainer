@@ -15,7 +15,9 @@ import {
   deleteTemplateSchema,
   deleteTrackSchema,
   exerciseIdSchema,
+  importExercisesSchema,
   importTemplatesSchema,
+  learningPathIdSchema,
   listRecordingsSchema,
   listSessionsSchema,
   logProgressSchema,
@@ -33,6 +35,7 @@ import {
   startSessionSchema,
   tagRecordingSchema,
   templateIdSchema,
+  toggleStepCompletionSchema,
   trackIdSchema,
   updateExerciseSchema,
   updateTemplateSchema,
@@ -220,6 +223,27 @@ export const restoreBackup = createServerFn({ method: 'POST' })
 export const importTemplates = createServerFn({ method: 'POST' })
   .validator(importTemplatesSchema)
   .handler(({ data }) => repo.importTemplates(data.markdown))
+
+export const importExercises = createServerFn({ method: 'POST' })
+  .validator(importExercisesSchema)
+  .handler(({ data }) => repo.importExercises(data.markdown))
+
+// --- Learning paths -------------------------------------------------------------
+
+export const listLearningPaths = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listLearningPaths(),
+)
+
+export const getLearningPath = createServerFn({ method: 'GET' })
+  .validator(learningPathIdSchema)
+  .handler(({ data }) => repo.getLearningPath(data.id))
+
+export const toggleStepCompletion = createServerFn({ method: 'POST' })
+  .validator(toggleStepCompletionSchema)
+  .handler(({ data }) => {
+    repo.toggleStepCompletion(data.stepId, data.completed)
+    return true
+  })
 
 // --- Audio tools ------------------------------------------------------------------
 

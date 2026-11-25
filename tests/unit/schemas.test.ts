@@ -4,6 +4,8 @@ import {
   createRecordingSchema,
   createTrackSchema,
   exerciseInputSchema,
+  importExercisesSchema,
+  learningPathIdSchema,
   listSessionsSchema,
   logProgressSchema,
   restoreBackupSchema,
@@ -13,6 +15,7 @@ import {
   setReferenceSchema,
   startSessionSchema,
   templateInputSchema,
+  toggleStepCompletionSchema,
 } from '#/server/schemas'
 
 describe('savePresetSchema', () => {
@@ -317,5 +320,32 @@ describe('setReferenceSchema', () => {
     expect(setReferenceSchema.safeParse({ recordingId: 1, exerciseId: 2 }).success).toBe(true)
     expect(setReferenceSchema.safeParse({ recordingId: 1 }).success).toBe(false)
     expect(setReferenceSchema.safeParse({ exerciseId: 2 }).success).toBe(false)
+  })
+})
+
+describe('learningPathIdSchema', () => {
+  it('requires a positive integer id', () => {
+    expect(learningPathIdSchema.safeParse({ id: 3 }).success).toBe(true)
+    expect(learningPathIdSchema.safeParse({}).success).toBe(false)
+    expect(learningPathIdSchema.safeParse({ id: 0 }).success).toBe(false)
+  })
+})
+
+describe('toggleStepCompletionSchema', () => {
+  it('requires a step id and a boolean flag', () => {
+    expect(toggleStepCompletionSchema.safeParse({ stepId: 4, completed: true }).success).toBe(true)
+    expect(toggleStepCompletionSchema.safeParse({ stepId: 4 }).success).toBe(false)
+    expect(toggleStepCompletionSchema.safeParse({ completed: true }).success).toBe(false)
+    expect(toggleStepCompletionSchema.safeParse({ stepId: -1, completed: true }).success).toBe(false)
+  })
+})
+
+describe('importExercisesSchema', () => {
+  it('requires a non-empty markdown body with a size cap', () => {
+    expect(importExercisesSchema.safeParse({ markdown: '## Exercises\n' }).success).toBe(true)
+    expect(importExercisesSchema.safeParse({ markdown: '' }).success).toBe(false)
+    expect(
+      importExercisesSchema.safeParse({ markdown: 'x'.repeat(200_001) }).success,
+    ).toBe(false)
   })
 })

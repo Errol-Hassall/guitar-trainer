@@ -71,7 +71,9 @@ function ExercisesPage() {
                       <Pencil className="size-4" aria-hidden="true" /> Open
                     </Button>
                   </Link>
-                  {confirmingId === exercise.id ? (
+                  {exercise.isBuiltin ? (
+                    <Badge variant="accent">Built-in</Badge>
+                  ) : confirmingId === exercise.id ? (
                     <>
                       <Button
                         variant="danger"

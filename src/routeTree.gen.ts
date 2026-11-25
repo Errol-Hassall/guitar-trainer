@@ -20,6 +20,8 @@ import { Route as TunerRouteImport } from './routes/tuner'
 import { Route as ExercisesIndexRouteImport } from './routes/exercises/index'
 import { Route as ExercisesExerciseIdRouteImport } from './routes/exercises/$exerciseId'
 import { Route as ExercisesNewRouteImport } from './routes/exercises/new'
+import { Route as LearningIndexRouteImport } from './routes/learning/index'
+import { Route as LearningPathIdRouteImport } from './routes/learning/$pathId'
 import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
 import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
@@ -80,6 +82,16 @@ const ExercisesNewRoute = ExercisesNewRouteImport.update({
   path: '/exercises/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearningIndexRoute = LearningIndexRouteImport.update({
+  id: '/learning/',
+  path: '/learning/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearningPathIdRoute = LearningPathIdRouteImport.update({
+  id: '/learning/$pathId',
+  path: '/learning/$pathId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
   id: '/sessions/$sessionId',
   path: '/sessions/$sessionId',
@@ -112,10 +124,12 @@ export interface FileRoutesByFullPath {
   '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
+  '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
   '/exercises/': typeof ExercisesIndexRoute
+  '/learning/': typeof LearningIndexRoute
   '/templates/': typeof TemplatesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -129,10 +143,12 @@ export interface FileRoutesByTo {
   '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
+  '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
   '/exercises': typeof ExercisesIndexRoute
+  '/learning': typeof LearningIndexRoute
   '/templates': typeof TemplatesIndexRoute
 }
 export interface FileRoutesById {
@@ -147,10 +163,12 @@ export interface FileRoutesById {
   '/tuner': typeof TunerRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
+  '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
   '/exercises/': typeof ExercisesIndexRoute
+  '/learning/': typeof LearningIndexRoute
   '/templates/': typeof TemplatesIndexRoute
 }
 export interface FileRouteTypes {
@@ -166,10 +184,12 @@ export interface FileRouteTypes {
     | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
+    | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
     | '/exercises/'
+    | '/learning/'
     | '/templates/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,10 +203,12 @@ export interface FileRouteTypes {
     | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
+    | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
     | '/exercises'
+    | '/learning'
     | '/templates'
   id:
     | '__root__'
@@ -200,10 +222,12 @@ export interface FileRouteTypes {
     | '/tuner'
     | '/exercises/$exerciseId'
     | '/exercises/new'
+    | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
     | '/exercises/'
+    | '/learning/'
     | '/templates/'
   fileRoutesById: FileRoutesById
 }
@@ -218,10 +242,12 @@ export interface RootRouteChildren {
   TunerRoute: typeof TunerRoute
   ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
   ExercisesNewRoute: typeof ExercisesNewRoute
+  LearningPathIdRoute: typeof LearningPathIdRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   TemplatesTemplateIdRoute: typeof TemplatesTemplateIdRoute
   TemplatesNewRoute: typeof TemplatesNewRoute
   ExercisesIndexRoute: typeof ExercisesIndexRoute
+  LearningIndexRoute: typeof LearningIndexRoute
   TemplatesIndexRoute: typeof TemplatesIndexRoute
 }
 
@@ -304,6 +330,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExercisesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learning/': {
+      id: '/learning/'
+      path: '/learning'
+      fullPath: '/learning/'
+      preLoaderRoute: typeof LearningIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learning/$pathId': {
+      id: '/learning/$pathId'
+      path: '/learning/$pathId'
+      fullPath: '/learning/$pathId'
+      preLoaderRoute: typeof LearningPathIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions/$sessionId': {
       id: '/sessions/$sessionId'
       path: '/sessions/$sessionId'
@@ -346,10 +386,12 @@ const rootRouteChildren: RootRouteChildren = {
   TunerRoute: TunerRoute,
   ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,
   ExercisesNewRoute: ExercisesNewRoute,
+  LearningPathIdRoute: LearningPathIdRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   TemplatesTemplateIdRoute: TemplatesTemplateIdRoute,
   TemplatesNewRoute: TemplatesNewRoute,
   ExercisesIndexRoute: ExercisesIndexRoute,
+  LearningIndexRoute: LearningIndexRoute,
   TemplatesIndexRoute: TemplatesIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -113,3 +113,58 @@ export function parseTemplatesFromMarkdown(text: string): ParsedTemplate[] {
   }
   return templates
 }
+
+export interface ParsedExercise {
+  name: string
+  hasTiming: boolean
+  difficulty: number
+  tags: string[]
+  tabText: string
+}
+
+const EXERCISE_HEADING = /^### (.+?) \((timed|untimed) · difficulty (\d+)\)$/
+
+/** Extract exercises from our export format (the '## Exercises' section). */
+export function parseExercisesFromMarkdown(text: string): ParsedExercise[] {
+  const lines = text.split('\n')
+  const start = lines.findIndex((line) => line.trim() === '## Exercises')
+  if (start === -1) return []
+  const end = lines.findIndex((line, index) => index > start && /^## /.test(line))
+  const block = lines.slice(start + 1, end === -1 ? lines.length : end)
+
+  const exercises: ParsedExercise[] = []
+  let current: ParsedExercise | null = null
+  let inTabFence = false
+  for (const line of block) {
+    if (line.trim() === '```') {
+      inTabFence = !inTabFence
+      continue
+    }
+    const heading = line.match(EXERCISE_HEADING)
+    if (heading) {
+      current = {
+        name: heading[1],
+        hasTiming: heading[2] === 'timed',
+        difficulty: Number(heading[3]),
+        tags: [],
+        tabText: '',
+      }
+      exercises.push(current)
+      inTabFence = false
+      continue
+    }
+    if (!current) continue
+    if (inTabFence) {
+      current.tabText = current.tabText === '' ? line : `${current.tabText}\n${line}`
+      continue
+    }
+    const tags = line.match(/^Tags: (.+)$/)
+    if (tags) {
+      current.tags = tags[1]
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag !== '')
+    }
+  }
+  return exercises
+}

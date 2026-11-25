@@ -143,6 +143,37 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  `
+  ALTER TABLE exercises ADD COLUMN is_builtin INTEGER NOT NULL DEFAULT 0 CHECK (is_builtin IN (0, 1));
+
+  CREATE TABLE learning_paths (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    theme TEXT NOT NULL,
+    position INTEGER NOT NULL,
+    is_builtin INTEGER NOT NULL DEFAULT 1 CHECK (is_builtin IN (0, 1)),
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE path_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    path_id INTEGER NOT NULL REFERENCES learning_paths(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    external_url TEXT,
+    exercise_id INTEGER REFERENCES exercises(id) ON DELETE SET NULL,
+    requires_step_id INTEGER REFERENCES path_steps(id) ON DELETE SET NULL
+  );
+  CREATE INDEX idx_path_steps_path ON path_steps(path_id, position);
+
+  CREATE TABLE path_step_state (
+    step_id INTEGER PRIMARY KEY REFERENCES path_steps(id) ON DELETE CASCADE,
+    completed_at TEXT NOT NULL
+  );
+  `,
 ]
 
 export const databasePath = resolve(

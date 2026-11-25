@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (Phases 1–5)
+## Features (Phases 1–6)
 
 **Metronome**
 
@@ -24,9 +24,15 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - One active session at a time; "one thing to fix this week" pinned into every session
 - History of all sessions with totals
 
+**Learning paths**
+
+- Four curated built-in paths mirroring the weekly rotation themes (*Clean Foundations*, *Alternate Picking 101 → 301*, *Legato & Groove*, *Accuracy & Transcription*), each an ordered chain of steps with prerequisites
+- Skill-tree view: each step is locked until its prerequisite is complete; completing a step unlocks the next, and clearing a step that completed steps depend on is rejected
+- Steps link out to external resources (YouTube searches / books) and to in-app drills where one fits
+
 **Exercises & progress**
 
-- Your own exercises (no built-ins): name, timed vs untimed, difficulty 1–5, up to 8 tags, optional tabs/notation text
+- A seeded library of common built-in drills (read-only, like templates and presets) alongside your own exercises: name, timed vs untimed, difficulty 1–5, up to 8 tags, optional tabs/notation text
 - Timed exercises log max clean BPM, average BPM, duration and clean streak; a dependency-free SVG chart shows max clean BPM over time
 - Untimed exercises log a self rating (1–5), duration and notes
 - Progress logs attach to the active session when one is running, so history stays linked
@@ -46,7 +52,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - One-tap mood at the end of practice sessions (energized / neutral / drained) with badges in session lists
 - Weekly review card: pre-filled facts (practiced every day or emergency?, current streak) plus "one thing that improved" and "one thing to focus on next week"; the focus answer becomes the pinned one-thing note; one row per ISO week, re-savable
 - Monthly progress check page with built-in milestone lists for months 1–2 / 3–4 / 5–6 / 7–12 (a reference, not ticked state)
-- Data page: Markdown export, full JSON backup (versioned), session CSV for spreadsheets; restore from a JSON backup replaces all data transactionally and re-seeds built-ins; Markdown import reads the Templates section of an export (existing names are skipped)
+- Data page: Markdown export, full JSON backup (versioned), session CSV for spreadsheets; restore from a JSON backup replaces all data transactionally and re-seeds built-ins; Markdown import reads the Templates and Exercises sections of an export — exercise packs import idempotently (existing names are skipped)
 - Installable PWA: web manifest, SVG icon and a service worker that caches the app shell (network-first). The server must be running for data changes — there is no offline data mode.
 
 ## Quickstart
@@ -120,11 +126,14 @@ per ISO week, upserted) · `app_state` (single row: weekly focus note). Sessions
 snapshot the template's name and sections at start time, so editing a template
 never rewrites history; they also carry an optional mood. Progress rows
 optionally reference the active session (`ON DELETE SET NULL`) and cascade with
-their exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
-Recordings and backing tracks live in `recordings` / `tracks` as audio BLOBs,
-tagged to sessions/exercises by name snapshot with `SET NULL` FKs; they are
-deliberately excluded from the v1 JSON backup, so restoring an old backup
-leaves existing audio untouched.
+their exercise. Built-ins are flagged `is_builtin` (templates, presets and
+exercises) and guarded in the repo. Learning paths live in
+`learning_paths` (1–n) `path_steps`, where each step optionally references a
+prerequisite step (`requires_step_id`) and an in-app drill; completion state is
+one row per done step in `path_step_state`. Recordings, backing tracks and
+learning-path progress live in `recordings` / `tracks` / `path_step_state`; all
+three are deliberately excluded from the v1 JSON backup, so restoring an old
+backup leaves existing audio and path progress untouched.
 
 ## Testing
 
@@ -136,9 +145,10 @@ bun run test:all   # the gate: typecheck → lint → vitest (unit + integration
   WSOLA time-stretch / YIN pitch detection and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
-  session lifecycle, clamping, rest days, presets, exercises + progress, the
-  focus note, streak dates, moods, weekly reviews, recordings/tracks and full
-  backup restore.
+  session lifecycle, clamping, rest days, presets, exercises + progress,
+  learning-path lock/unlock rules, built-in exercise guards, exercise-pack
+  import, the focus note, streak dates, moods, weekly reviews, recordings/tracks
+  and full backup restore.
 - **E2E** (`e2e/`, Playwright): production build served on `127.0.0.1:3100`
   with a fresh throwaway DB; 1 worker, no retries, traces/screenshots/HTML
   report on failure. System Chromium is used when present, otherwise the
@@ -156,16 +166,21 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
-Phases 6–8 of the original spec are out of scope: speed trainer, focus mode,
+Phases 7–8 of the original spec are out of scope: speed trainer, focus mode,
 automatic Sunday theme selection and everything beyond the metronome, sessions,
-exercises, audio tools and workflow. Also skipped in Phase 5: trimming,
-multi-track mixing and waveform zoom; live mic-into-track mixing (the "crossfade"
+exercises, learning content, audio tools and workflow. Also skipped in Phase 6:
+scales and chords content (the spec marks both "future todo"), community
+contributions and AI guidance (spec says later), user-created or edited learning
+paths (curated built-ins only), and SVG skill-tree graphs (paths are linear
+chains, so the tree renders as an ordered step list).
+Also skipped in Phase 5: trimming, multi-track mixing and waveform zoom; live
+mic-into-track mixing (the "crossfade"
 is a track-side gain slider); URL tracks that do not send CORS headers cannot be
 loaded (surfaced as an error); pitch shift is practice-grade (WSOLA stretch plus
 playback-rate composition), not studio-grade. Also skipped in Phase 4: full
 offline data access (the PWA shell installs and loads from cache, but data
 changes need the server running — an IndexedDB/WASM mirror would be a separate
 project), File System Access API folder coexistence, and Markdown import of
-session logs (import covers templates only). The
+session logs (import covers templates and exercise packs). The
 server-function layer is deliberately kept as a thin validated boundary so a
 future auth layer can slot in without restructuring.

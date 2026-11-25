@@ -181,8 +181,37 @@ export interface Exercise {
   difficulty: number
   tags: string[]
   tabText: string
+  isBuiltin: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface LearningPathStep {
+  id: number
+  position: number
+  title: string
+  description: string
+  externalUrl: string | null
+  exerciseId: number | null
+  exerciseName: string | null
+  requiresStepId: number | null
+  requiresTitle: string | null
+  completed: boolean
+  unlocked: boolean
+}
+
+export interface LearningPathSummary {
+  id: number
+  name: string
+  description: string
+  theme: Theme
+  isBuiltin: boolean
+  stepCount: number
+  completedSteps: number
+}
+
+export interface LearningPathDetail extends LearningPathSummary {
+  steps: LearningPathStep[]
 }
 
 export interface ExerciseInput {

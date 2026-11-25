@@ -69,7 +69,7 @@ test.describe('workflow', () => {
   test('rejects a markdown import without a templates section', async ({ page }) => {
     await page.goto('/data')
     await page
-      .getByLabel('Markdown file')
+      .locator('#import-markdown')
       .setInputFiles({ name: 'notes.md', mimeType: 'text/markdown', buffer: Buffer.from('# Notes\nJust practice notes.\n') })
     await expect(page.getByText('No new templates found in that file.')).toBeVisible()
   })

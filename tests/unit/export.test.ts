@@ -3,6 +3,7 @@ import type { AppExport } from '#/lib/types'
 import {
   exportJson,
   exportMarkdown,
+  parseExercisesFromMarkdown,
   parseTemplatesFromMarkdown,
   sessionsCsv,
 } from '#/lib/export'
@@ -38,6 +39,7 @@ const data: AppExport = {
       difficulty: 3,
       tags: ['Technique'],
       tabText: 'e|---0-2-4-',
+      isBuiltin: false,
       createdAt: '2026-11-01T09:00:00.000Z',
       updatedAt: '2026-11-01T09:00:00.000Z',
     },
@@ -173,5 +175,48 @@ describe('parseTemplatesFromMarkdown', () => {
     expect(parsed).toEqual([
       { name: 'Solo', isBuiltin: false, sections: [{ name: 'Warm-up', minutes: 5 }] },
     ])
+  })
+})
+
+describe('parseExercisesFromMarkdown', () => {
+  it('round-trips the exercises from our own export', () => {
+    const parsed = parseExercisesFromMarkdown(exportMarkdown(data))
+    expect(parsed).toEqual([
+      {
+        name: 'Picking drill',
+        hasTiming: true,
+        difficulty: 3,
+        tags: ['Technique'],
+        tabText: 'e|---0-2-4-',
+      },
+    ])
+  })
+
+  it('parses multi-line tabs and multiple comma-separated tags', () => {
+    const parsed = parseExercisesFromMarkdown(
+      [
+        '## Exercises',
+        '### Ladder (untimed · difficulty 2)',
+        'Tags: legato, warm-up',
+        '```',
+        'e|---0-2-',
+        'B|---1-3-',
+        '```',
+        '',
+      ].join('\n'),
+    )
+    expect(parsed).toEqual([
+      {
+        name: 'Ladder',
+        hasTiming: false,
+        difficulty: 2,
+        tags: ['legato', 'warm-up'],
+        tabText: 'e|---0-2-\nB|---1-3-',
+      },
+    ])
+  })
+
+  it('returns an empty list for a file without an exercises section', () => {
+    expect(parseExercisesFromMarkdown('# Notes\nJust some practice notes.')).toEqual([])
   })
 })
