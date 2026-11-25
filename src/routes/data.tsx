@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import type { AppExport } from '#/lib/types'
 import { getCsvExport, getJsonExport, getMarkdownExport, importTemplates, restoreBackup } from '#/server/api'
@@ -29,7 +29,6 @@ function DataPage() {
   const [status, setStatus] = useState<string | null>(null)
 
   const [restoreFile, setRestoreFile] = useState<File | null>(null)
-  const restoreInputRef = useRef<HTMLInputElement>(null)
 
   async function runExport(key: string, filename: string, type: string, fetchContent: () => Promise<string>) {
     setBusy(key)
@@ -176,7 +175,6 @@ function DataPage() {
             <Field label="Backup file (.json)" htmlFor="restore-backup">
               <input
                 id="restore-backup"
-                ref={restoreInputRef}
                 type="file"
                 accept=".json,application/json"
                 onChange={handleRestoreFile}
