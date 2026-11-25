@@ -174,6 +174,16 @@ const MIGRATIONS: string[] = [
     completed_at TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE ear_stats (
+    drill TEXT NOT NULL,
+    level INTEGER NOT NULL DEFAULT 1 CHECK (level BETWEEN 1 AND 2),
+    attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+    correct INTEGER NOT NULL DEFAULT 0 CHECK (correct >= 0),
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (drill, level)
+  );
+  `,
 ]
 
 export const databasePath = resolve(

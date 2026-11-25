@@ -19,6 +19,7 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
+  db.exec('DELETE FROM ear_stats')
   db.exec('DELETE FROM path_step_state')
   db.exec('DELETE FROM path_steps')
   db.exec('DELETE FROM learning_paths')
@@ -721,5 +722,26 @@ describe('importExercises', () => {
     const markdown = `## Exercises\n### ${builtin.name} (untimed · difficulty 1)\n`
     expect(repo.importExercises(markdown)).toBe(0)
     expect(repo.importExercises('# Export\n## Templates\n')).toBe(0)
+  })
+})
+
+describe('ear stats', () => {
+  it('starts empty and accumulates rounds per drill and level', () => {
+    expect(repo.listEarStats()).toEqual([])
+
+    repo.logEarRound({ drill: 'intervals', level: 1, correct: 8, total: 10 })
+    repo.logEarRound({ drill: 'intervals', level: 1, correct: 5, total: 10 })
+    repo.logEarRound({ drill: 'chord-quality', level: 2, correct: 3, total: 10 })
+
+    // Two distinct (drill, level) pairs: the two interval rounds upsert one row.
+    const stats = repo.listEarStats()
+    expect(stats).toHaveLength(2)
+    const intervals = stats.find((stat) => stat.drill === 'intervals')!
+    expect(intervals.level).toBe(1)
+    expect(intervals.attempts).toBe(20)
+    expect(intervals.correct).toBe(13)
+    const sevenths = stats.find((stat) => stat.drill === 'chord-quality')!
+    expect(sevenths.level).toBe(2)
+    expect(sevenths.attempts).toBe(10)
   })
 })

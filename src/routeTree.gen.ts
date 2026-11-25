@@ -17,6 +17,8 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RecordingsRouteImport } from './routes/recordings'
 import { Route as TracksRouteImport } from './routes/tracks'
 import { Route as TunerRouteImport } from './routes/tuner'
+import { Route as EarIndexRouteImport } from './routes/ear/index'
+import { Route as EarDrillRouteImport } from './routes/ear/$drill'
 import { Route as ExercisesIndexRouteImport } from './routes/exercises/index'
 import { Route as ExercisesExerciseIdRouteImport } from './routes/exercises/$exerciseId'
 import { Route as ExercisesNewRouteImport } from './routes/exercises/new'
@@ -65,6 +67,16 @@ const TracksRoute = TracksRouteImport.update({
 const TunerRoute = TunerRouteImport.update({
   id: '/tuner',
   path: '/tuner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarIndexRoute = EarIndexRouteImport.update({
+  id: '/ear/',
+  path: '/ear/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EarDrillRoute = EarDrillRouteImport.update({
+  id: '/ear/$drill',
+  path: '/ear/$drill',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExercisesIndexRoute = ExercisesIndexRouteImport.update({
@@ -122,12 +134,14 @@ export interface FileRoutesByFullPath {
   '/recordings': typeof RecordingsRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
+  '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/ear/': typeof EarIndexRoute
   '/exercises/': typeof ExercisesIndexRoute
   '/learning/': typeof LearningIndexRoute
   '/templates/': typeof TemplatesIndexRoute
@@ -141,12 +155,14 @@ export interface FileRoutesByTo {
   '/recordings': typeof RecordingsRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
+  '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/ear': typeof EarIndexRoute
   '/exercises': typeof ExercisesIndexRoute
   '/learning': typeof LearningIndexRoute
   '/templates': typeof TemplatesIndexRoute
@@ -161,12 +177,14 @@ export interface FileRoutesById {
   '/recordings': typeof RecordingsRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
+  '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/learning/$pathId': typeof LearningPathIdRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/ear/': typeof EarIndexRoute
   '/exercises/': typeof ExercisesIndexRoute
   '/learning/': typeof LearningIndexRoute
   '/templates/': typeof TemplatesIndexRoute
@@ -182,12 +200,14 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/tracks'
     | '/tuner'
+    | '/ear/$drill'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/ear/'
     | '/exercises/'
     | '/learning/'
     | '/templates/'
@@ -201,12 +221,14 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/tracks'
     | '/tuner'
+    | '/ear/$drill'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/ear'
     | '/exercises'
     | '/learning'
     | '/templates'
@@ -220,12 +242,14 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/tracks'
     | '/tuner'
+    | '/ear/$drill'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/learning/$pathId'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/ear/'
     | '/exercises/'
     | '/learning/'
     | '/templates/'
@@ -240,12 +264,14 @@ export interface RootRouteChildren {
   RecordingsRoute: typeof RecordingsRoute
   TracksRoute: typeof TracksRoute
   TunerRoute: typeof TunerRoute
+  EarDrillRoute: typeof EarDrillRoute
   ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
   ExercisesNewRoute: typeof ExercisesNewRoute
   LearningPathIdRoute: typeof LearningPathIdRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   TemplatesTemplateIdRoute: typeof TemplatesTemplateIdRoute
   TemplatesNewRoute: typeof TemplatesNewRoute
+  EarIndexRoute: typeof EarIndexRoute
   ExercisesIndexRoute: typeof ExercisesIndexRoute
   LearningIndexRoute: typeof LearningIndexRoute
   TemplatesIndexRoute: typeof TemplatesIndexRoute
@@ -307,6 +333,20 @@ declare module '@tanstack/react-router' {
       path: '/tuner'
       fullPath: '/tuner'
       preLoaderRoute: typeof TunerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ear/': {
+      id: '/ear/'
+      path: '/ear'
+      fullPath: '/ear/'
+      preLoaderRoute: typeof EarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ear/$drill': {
+      id: '/ear/$drill'
+      path: '/ear/$drill'
+      fullPath: '/ear/$drill'
+      preLoaderRoute: typeof EarDrillRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exercises/': {
@@ -384,12 +424,14 @@ const rootRouteChildren: RootRouteChildren = {
   RecordingsRoute: RecordingsRoute,
   TracksRoute: TracksRoute,
   TunerRoute: TunerRoute,
+  EarDrillRoute: EarDrillRoute,
   ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,
   ExercisesNewRoute: ExercisesNewRoute,
   LearningPathIdRoute: LearningPathIdRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   TemplatesTemplateIdRoute: TemplatesTemplateIdRoute,
   TemplatesNewRoute: TemplatesNewRoute,
+  EarIndexRoute: EarIndexRoute,
   ExercisesIndexRoute: ExercisesIndexRoute,
   LearningIndexRoute: LearningIndexRoute,
   TemplatesIndexRoute: TemplatesIndexRoute,

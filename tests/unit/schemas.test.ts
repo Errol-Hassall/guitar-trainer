@@ -5,6 +5,7 @@ import {
   createTrackSchema,
   exerciseInputSchema,
   importExercisesSchema,
+  logEarRoundSchema,
   learningPathIdSchema,
   listSessionsSchema,
   logProgressSchema,
@@ -347,5 +348,34 @@ describe('importExercisesSchema', () => {
     expect(
       importExercisesSchema.safeParse({ markdown: 'x'.repeat(200_001) }).success,
     ).toBe(false)
+  })
+})
+
+describe('logEarRoundSchema', () => {
+  it('accepts a known drill with a plausible score', () => {
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 8, total: 10 }).success,
+    ).toBe(true)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'chord-quality', level: 2, correct: 0, total: 10 }).success,
+    ).toBe(true)
+  })
+
+  it('rejects unknown drills, out-of-range levels and impossible scores', () => {
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'rhythm-games', level: 1, correct: 1, total: 2 }).success,
+    ).toBe(false)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 3, correct: 1, total: 2 }).success,
+    ).toBe(false)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 0, correct: 1, total: 2 }).success,
+    ).toBe(false)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 3, total: 2 }).success,
+    ).toBe(false)
+    expect(logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1 }).success).toBe(
+      false,
+    )
   })
 })

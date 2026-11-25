@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (Phases 1–6)
+## Features (Phases 1–7)
 
 **Metronome**
 
@@ -29,6 +29,12 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Four curated built-in paths mirroring the weekly rotation themes (*Clean Foundations*, *Alternate Picking 101 → 301*, *Legato & Groove*, *Accuracy & Transcription*), each an ordered chain of steps with prerequisites
 - Skill-tree view: each step is locked until its prerequisite is complete; completing a step unlocks the next, and clearing a step that completed steps depend on is rejected
 - Steps link out to external resources (YouTube searches / books) and to in-app drills where one fits
+
+**Ear training**
+
+- Four scored drills, all synthesized in the browser with Web Audio (no samples): **Intervals** (the ten standard ones), **Scale degrees** (major scale 1–7, tonic played first), **Chord quality** (level 1 major/minor, level 2 adds maj7/min7/dom7) and **Progressions** (four common diatonic three-chord progressions)
+- Ten prompts per round: listen as often as you like, tap the answer, get instant feedback; accuracy is kept per drill/level and shown on the drill list
+- **Transcription helper** (unscored): a 2–4 note stepwise phrase to sing first and then find on the guitar, with a reveal button — and an optional mic take saved straight into the recordings store (Phase 5), playable back next to the original flow
 
 **Exercises & progress**
 
@@ -130,10 +136,12 @@ their exercise. Built-ins are flagged `is_builtin` (templates, presets and
 exercises) and guarded in the repo. Learning paths live in
 `learning_paths` (1–n) `path_steps`, where each step optionally references a
 prerequisite step (`requires_step_id`) and an in-app drill; completion state is
-one row per done step in `path_step_state`. Recordings, backing tracks and
-learning-path progress live in `recordings` / `tracks` / `path_step_state`; all
-three are deliberately excluded from the v1 JSON backup, so restoring an old
-backup leaves existing audio and path progress untouched.
+one row per done step in `path_step_state`. Ear-training scores live in
+`ear_stats`, one cumulative row per drill and level (`attempts` / `correct`).
+Recordings, backing tracks, learning-path progress and ear scores live in
+`recordings` / `tracks` / `path_step_state` / `ear_stats`; all four are
+deliberately excluded from the v1 JSON backup, so restoring an old backup
+leaves existing audio, path progress and drill accuracy untouched.
 
 ## Testing
 
@@ -142,13 +150,14 @@ bun run test:all   # the gate: typecheck → lint → vitest (unit + integration
 ```
 
 - **Unit** (`tests/unit/`): pure metronome/session logic, progress-graph points,
-  WSOLA time-stretch / YIN pitch detection and zod schemas.
+  WSOLA time-stretch / YIN pitch detection, ear-drill question generation
+  (seeded RNG, diatonic correctness, difficulty tiers) and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
   session lifecycle, clamping, rest days, presets, exercises + progress,
   learning-path lock/unlock rules, built-in exercise guards, exercise-pack
-  import, the focus note, streak dates, moods, weekly reviews, recordings/tracks
-  and full backup restore.
+  import, ear-stat accumulation, the focus note, streak dates, moods, weekly
+  reviews, recordings/tracks and full backup restore.
 - **E2E** (`e2e/`, Playwright): production build served on `127.0.0.1:3100`
   with a fresh throwaway DB; 1 worker, no retries, traces/screenshots/HTML
   report on failure. System Chromium is used when present, otherwise the
@@ -166,9 +175,17 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
-Phases 7–8 of the original spec are out of scope: speed trainer, focus mode,
-automatic Sunday theme selection and everything beyond the metronome, sessions,
-exercises, learning content, audio tools and workflow. Also skipped in Phase 6:
+The remaining items from the original spec are out of scope: speed trainer,
+focus mode, automatic Sunday theme selection and everything beyond the
+metronome, sessions, exercises, learning content, ear training, audio tools and
+workflow. Also skipped in Phase 7: adaptive difficulty (FET-style option sets
+that expand as accuracy improves — fixed option sets per drill/level instead),
+scale degrees beyond the major scale (natural minor / pentatonic come later),
+intervals beyond the ten standard ones, auto-grading of transcription takes
+(no pitch detection for grading — takes are self-checked against the reveal),
+per-question history (only cumulative attempts/correct per drill and level),
+and ear scores in the JSON backup (excluded, same boundary as audio and path
+progress). Also skipped in Phase 6:
 scales and chords content (the spec marks both "future todo"), community
 contributions and AI guidance (spec says later), user-created or edited learning
 paths (curated built-ins only), and SVG skill-tree graphs (paths are linear

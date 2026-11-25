@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { EAR_DRILL_IDS } from '#/lib/ear'
 import { MOODS, SESSION_KINDS, SUBDIVISIONS, THEMES } from '#/lib/types'
 
 export const idSchema = z.number().int().positive()
@@ -154,6 +155,20 @@ export const weeklyReviewIdSchema = z.object({
 export const recentReviewsSchema = z.object({
   limit: z.number().int().min(1).max(50).default(5),
 })
+
+// --- Ear training -------------------------------------------------------------------
+
+export const logEarRoundSchema = z
+  .object({
+    drill: z.enum(EAR_DRILL_IDS),
+    level: z.number().int().min(1).max(2),
+    correct: z.number().int().min(0),
+    total: z.number().int().min(1).max(100),
+  })
+  .refine((round) => round.correct <= round.total, {
+    message: 'Correct answers cannot exceed the total',
+    path: ['correct'],
+  })
 
 // --- Audio tools ------------------------------------------------------------------
 

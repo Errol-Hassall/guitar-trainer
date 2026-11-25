@@ -255,6 +255,17 @@ export interface LogProgressInput {
   notes?: string
 }
 
+import type { EarDrillId } from './ear'
+
+/** Accumulated ear-training score for one drill (and level, where it has any). */
+export interface EarStat {
+  drill: EarDrillId
+  level: number
+  attempts: number
+  correct: number
+  updatedAt: string
+}
+
 export interface RecordingSummary {
   id: number
   name: string

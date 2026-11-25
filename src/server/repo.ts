@@ -1,8 +1,10 @@
 import { db } from './db'
 import { seedDatabase } from './seed-data'
+import type { EarDrillId } from '#/lib/ear'
 import type {
   AppExport,
   BackingTrack,
+  EarStat,
   Exercise,
   ExerciseInput,
   ExerciseProgress,
@@ -854,6 +856,45 @@ export function toggleStepCompletion(stepId: number, completed: boolean): void {
     throw new Error('Completed steps depend on this one — clear them first.')
   }
   db.prepare('DELETE FROM path_step_state WHERE step_id = ?').run(stepId)
+}
+
+// --- Ear training -----------------------------------------------------------------
+
+interface EarStatRow {
+  drill: string
+  level: number
+  attempts: number
+  correct: number
+  updated_at: string
+}
+
+export function listEarStats(): EarStat[] {
+  const rows = db
+    .prepare('SELECT * FROM ear_stats ORDER BY drill, level')
+    .all() as unknown as EarStatRow[]
+  return rows.map((row) => ({
+    drill: row.drill as EarDrillId,
+    level: Number(row.level),
+    attempts: Number(row.attempts),
+    correct: Number(row.correct),
+    updatedAt: row.updated_at,
+  }))
+}
+
+export function logEarRound(input: {
+  drill: EarDrillId
+  level: number
+  correct: number
+  total: number
+}): void {
+  db.prepare(
+    `INSERT INTO ear_stats (drill, level, attempts, correct, updated_at)
+     VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (drill, level) DO UPDATE SET
+       attempts = attempts + excluded.attempts,
+       correct = correct + excluded.correct,
+       updated_at = excluded.updated_at`,
+  ).run(input.drill, input.level, input.total, input.correct, nowIso())
 }
 
 // --- Workflow: streak dates, mood, weekly reviews -----------------------------

@@ -19,6 +19,7 @@ import {
   importTemplatesSchema,
   learningPathIdSchema,
   listRecordingsSchema,
+  logEarRoundSchema,
   listSessionsSchema,
   logProgressSchema,
   oneThingSchema,
@@ -242,6 +243,19 @@ export const toggleStepCompletion = createServerFn({ method: 'POST' })
   .validator(toggleStepCompletionSchema)
   .handler(({ data }) => {
     repo.toggleStepCompletion(data.stepId, data.completed)
+    return true
+  })
+
+// --- Ear training -----------------------------------------------------------------
+
+export const listEarStats = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listEarStats(),
+)
+
+export const logEarRound = createServerFn({ method: 'POST' })
+  .validator(logEarRoundSchema)
+  .handler(({ data }) => {
+    repo.logEarRound(data)
     return true
   })
 
