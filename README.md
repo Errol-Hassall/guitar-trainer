@@ -186,6 +186,9 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
+Feature gaps vs [hoksai.online](https://hoksai.online/) (chord/scale library, rhythm
+trainer, LickLab, …) are catalogued in [FUTURE_FEATURES.md](FUTURE_FEATURES.md).
+
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
 metronome, sessions, exercises, learning content, ear training, audio tools and
