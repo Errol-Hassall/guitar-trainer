@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SESSION_KINDS, SUBDIVISIONS, THEMES } from '#/lib/types'
+import { MOODS, SESSION_KINDS, SUBDIVISIONS, THEMES } from '#/lib/types'
 
 export const idSchema = z.number().int().positive()
 
@@ -115,4 +115,122 @@ export const logProgressSchema = z.object({
   cleanStreak: z.number().int().min(0).max(10_000).nullable().optional(),
   selfRating: z.number().int().min(1).max(5).nullable().optional(),
   notes: z.string().max(4000).default(''),
+})
+
+export const setMoodSchema = z.object({
+  id: idSchema,
+  mood: z.enum(MOODS),
+})
+
+export const saveWeeklyReviewSchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Week start must be YYYY-MM-DD'),
+  practicedEveryday: z.boolean(),
+  streakCount: z.number().int().min(0).max(36_500),
+  improved: z.string().max(4000),
+  focus: z.string().max(4000),
+})
+
+export const importTemplatesSchema = z.object({
+  markdown: z.string().min(1).max(200_000),
+})
+
+export const weeklyReviewIdSchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+
+export const recentReviewsSchema = z.object({
+  limit: z.number().int().min(1).max(50).default(5),
+})
+
+const exportSectionSchema = z.object({
+  name: z.string().min(1).max(40),
+  minutes: z.number().int().min(1).max(180),
+})
+
+const exportTemplateSchema = z.object({
+  id: idSchema,
+  slug: z.string().nullable(),
+  name: z.string().min(1).max(60),
+  isBuiltin: z.boolean(),
+  sections: z.array(exportSectionSchema).max(12),
+})
+
+const exportSessionSectionSchema = z.object({
+  position: z.number().int().min(0),
+  name: z.string().min(1).max(40),
+  plannedSeconds: z.number().int().positive(),
+  elapsedSeconds: z.number().int().min(0).max(86_400),
+  notes: z.string().max(4000),
+  completedAt: z.string().nullable(),
+})
+
+const exportSessionSchema = z.object({
+  id: idSchema,
+  templateId: idSchema.nullable(),
+  templateName: z.string().min(1).max(60),
+  theme: z.enum(THEMES),
+  kind: z.enum(SESSION_KINDS),
+  autoAdvance: z.boolean(),
+  status: z.enum(['active', 'completed']),
+  startedAt: z.string(),
+  completedAt: z.string().nullable(),
+  mood: z.enum(MOODS).nullable(),
+  sections: z.array(exportSessionSectionSchema).max(12),
+})
+
+const exportExerciseSchema = z.object({
+  id: idSchema,
+  name: z.string().min(1).max(60),
+  hasTiming: z.boolean(),
+  difficulty: z.number().int().min(1).max(5),
+  tags: z.array(z.string().max(24)).max(8),
+  tabText: z.string().max(4000),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+const exportProgressSchema = z.object({
+  id: idSchema,
+  exerciseId: idSchema,
+  sessionId: idSchema.nullable(),
+  maxCleanBpm: z.number().int().min(1).max(999).nullable(),
+  avgBpm: z.number().int().min(1).max(999).nullable(),
+  durationSeconds: z.number().int().min(0),
+  cleanStreak: z.number().int().min(0).nullable(),
+  selfRating: z.number().int().min(1).max(5).nullable(),
+  notes: z.string().max(4000),
+  completedAt: z.string(),
+})
+
+const exportPresetSchema = z.object({
+  id: idSchema,
+  slug: z.string().nullable(),
+  name: z.string().min(1).max(40),
+  isBuiltin: z.boolean(),
+  bpm: z.number().int().min(1).max(999),
+  beats: z.number().int().min(1).max(16),
+  beatUnit: beatUnitSchema,
+  subdivision: z.enum(SUBDIVISIONS),
+  accents: z.array(accentLevelSchema).min(1).max(16),
+})
+
+const exportReviewSchema = z.object({
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  practicedEveryday: z.boolean(),
+  streakCount: z.number().int().min(0),
+  improved: z.string().max(4000),
+  focus: z.string().max(4000),
+  createdAt: z.string(),
+})
+
+export const restoreBackupSchema = z.object({
+  version: z.literal(1),
+  exportedAt: z.string(),
+  oneThing: z.string().max(500),
+  templates: z.array(exportTemplateSchema).max(1000),
+  exercises: z.array(exportExerciseSchema).max(1000),
+  exerciseProgress: z.array(exportProgressSchema).max(100_000),
+  presets: z.array(exportPresetSchema).max(1000),
+  sessions: z.array(exportSessionSchema).max(100_000),
+  weeklyReviews: z.array(exportReviewSchema).max(1000),
 })

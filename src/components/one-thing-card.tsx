@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { setOneThing } from '#/server/api'
 import { Button } from './ui/button'
 import { Card } from './ui/card'
@@ -9,6 +9,11 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 export function OneThingCard({ initial }: { initial: string }) {
   const [text, setText] = useState(initial)
   const [status, setStatus] = useState<SaveStatus>('idle')
+
+  // Follow external updates (e.g. a weekly review pinning the focus).
+  useEffect(() => {
+    setText(initial)
+  }, [initial])
 
   async function handleSave() {
     setStatus('saving')

@@ -1,11 +1,14 @@
 import { db } from './db'
+import { seedDatabase } from './seed-data'
 import type {
+  AppExport,
   Exercise,
   ExerciseInput,
   ExerciseProgress,
   ExerciseSummary,
   LogProgressInput,
   MetronomePreset,
+  Mood,
   PracticeSession,
   PresetInput,
   SessionSection,
@@ -17,7 +20,9 @@ import type {
   Theme,
   UpdateExerciseInput,
   UpdateTemplateInput,
+  WeeklyReview,
 } from '#/lib/types'
+import { parseTemplatesFromMarkdown } from '#/lib/export'
 import { defaultAccents, resizeAccents } from '#/lib/metronome'
 import { plannedSeconds } from '#/lib/sessions'
 
@@ -48,6 +53,7 @@ interface SessionRow {
   status: SessionStatus
   started_at: string
   completed_at: string | null
+  mood: Mood | null
 }
 
 interface SessionSectionRow {
@@ -88,6 +94,7 @@ interface ExerciseRow {
 interface ProgressRow {
   id: number
   exercise_id: number
+  session_id: number | null
   session_name: string | null
   max_clean_bpm: number | null
   avg_bpm: number | null
@@ -198,6 +205,7 @@ function mapSession(row: SessionRow, sections: SessionSectionRow[]): PracticeSes
     status: row.status,
     startedAt: row.started_at,
     completedAt: row.completed_at,
+    mood: row.mood,
     sections: sections.map(mapSection),
   }
 }
@@ -407,7 +415,7 @@ export function getActiveSession(): PracticeSession | null {
 export function listSessions(limit: number): SessionSummary[] {
   const rows = db
     .prepare(
-      `SELECT s.id, s.template_name, s.theme, s.kind, s.status, s.started_at, s.completed_at,
+      `SELECT s.id, s.template_name, s.theme, s.kind, s.status, s.started_at, s.completed_at, s.mood,
               COUNT(ss.id) AS section_count,
               COALESCE(SUM(CASE WHEN ss.completed_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS completed_sections,
               COALESCE(SUM(ss.elapsed_seconds), 0) AS total_seconds
@@ -434,6 +442,7 @@ export function listSessions(limit: number): SessionSummary[] {
     sectionCount: row.section_count,
     completedSections: row.completed_sections,
     totalSeconds: row.total_seconds,
+    mood: row.mood,
   }))
 }
 
@@ -681,4 +690,314 @@ export function logProgress(input: LogProgressInput): void {
     input.notes ?? '',
     nowIso(),
   )
+}
+
+export function importTemplates(markdown: string): number {
+  const parsed = parseTemplatesFromMarkdown(markdown)
+  let created = 0
+  for (const template of parsed) {
+    if (template.sections.length === 0) continue
+    // Idempotent: skip anything with the same name (built-in or custom).
+    if (db.prepare('SELECT id FROM templates WHERE name = ?').get(template.name)) continue
+    createTemplate({ name: template.name, sections: template.sections })
+    created += 1
+  }
+  return created
+}
+
+// --- Workflow: streak dates, mood, weekly reviews -----------------------------
+
+export function listSessionDates(): string[] {
+  const rows = db.prepare('SELECT date(started_at) AS day FROM sessions').all() as {
+    day: string
+  }[]
+  return rows.map((row) => row.day)
+}
+
+/** Distinct UTC days with an actual practice session (full or light). */
+export function listPracticedDates(): string[] {
+  const rows = db
+    .prepare("SELECT DISTINCT date(started_at) AS day FROM sessions WHERE kind IN ('full', 'light')")
+    .all() as { day: string }[]
+  return rows.map((row) => row.day)
+}
+
+export function setSessionMood(sessionId: number, mood: Mood): void {
+  const updated = db.prepare('UPDATE sessions SET mood = ? WHERE id = ?').run(mood, sessionId)
+  if (Number(updated.changes) === 0) throw new Error('Session not found.')
+}
+
+interface ReviewRow {
+  week_start: string
+  practiced_everyday: number
+  streak_count: number
+  improved: string
+  focus: string
+  created_at: string
+}
+
+function mapReview(row: ReviewRow): WeeklyReview {
+  return {
+    weekStart: row.week_start,
+    practicedEveryday: row.practiced_everyday === 1,
+    streakCount: row.streak_count,
+    improved: row.improved,
+    focus: row.focus,
+    createdAt: row.created_at,
+  }
+}
+
+export function getWeeklyReview(weekStart: string): WeeklyReview | null {
+  const row = db.prepare('SELECT * FROM weekly_reviews WHERE week_start = ?').get(
+    weekStart,
+  ) as ReviewRow | undefined
+  return row ? mapReview(row) : null
+}
+
+export function saveWeeklyReview(review: Omit<WeeklyReview, 'createdAt'>): void {
+  transaction(() => {
+    db.prepare(
+      `INSERT INTO weekly_reviews (week_start, practiced_everyday, streak_count, improved, focus, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(week_start) DO UPDATE SET
+         practiced_everyday = excluded.practiced_everyday,
+         streak_count = excluded.streak_count,
+         improved = excluded.improved,
+         focus = excluded.focus`,
+    ).run(
+      review.weekStart,
+      review.practicedEveryday ? 1 : 0,
+      review.streakCount,
+      review.improved,
+      review.focus,
+      nowIso(),
+    )
+    // A non-empty focus becomes next week's pinned one thing.
+    if (review.focus !== '') setOneThing(review.focus)
+  })
+}
+
+export function listRecentReviews(limit: number): WeeklyReview[] {
+  const rows = db
+    .prepare('SELECT * FROM weekly_reviews ORDER BY week_start DESC LIMIT ?')
+    .all(limit) as unknown as ReviewRow[]
+  return rows.map(mapReview)
+}
+
+// --- Backup: full dump and restore --------------------------------------------
+
+export function dumpAll(): AppExport {
+  const templates = (db.prepare('SELECT * FROM templates ORDER BY id').all() as unknown as TemplateRow[]).map(
+    (row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      isBuiltin: row.is_builtin === 1,
+      sections: listSectionsForTemplate(row.id).map((section) => ({
+        name: section.name,
+        minutes: section.minutes,
+      })),
+    }),
+  )
+
+  const exercises = (db.prepare('SELECT * FROM exercises ORDER BY id').all() as unknown as ExerciseRow[]).map(
+    mapExercise,
+  )
+
+  const exerciseProgress = (
+    db.prepare('SELECT * FROM exercise_progress ORDER BY id').all() as unknown as ProgressRow[]
+  ).map((row) => ({
+    id: row.id,
+    exerciseId: row.exercise_id,
+    sessionId: row.session_id,
+    maxCleanBpm: row.max_clean_bpm,
+    avgBpm: row.avg_bpm,
+    durationSeconds: row.duration_seconds,
+    cleanStreak: row.clean_streak,
+    selfRating: row.self_rating,
+    notes: row.notes,
+    completedAt: row.completed_at,
+  }))
+
+  const presets = (db.prepare('SELECT * FROM presets ORDER BY id').all() as unknown as PresetRow[]).map(
+    mapPreset,
+  )
+
+  const sessions = (db.prepare('SELECT * FROM sessions ORDER BY id').all() as unknown as SessionRow[]).map(
+    (row) => ({
+      id: row.id,
+      templateId: row.template_id,
+      templateName: row.template_name,
+      theme: row.theme,
+      kind: row.kind,
+      autoAdvance: row.auto_advance === 1,
+      status: row.status,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      mood: row.mood,
+      sections: listSectionsForSession(row.id).map((section) => ({
+        position: section.position,
+        name: section.name,
+        plannedSeconds: section.planned_seconds,
+        elapsedSeconds: section.elapsed_seconds,
+        notes: section.notes,
+        completedAt: section.completed_at,
+      })),
+    }),
+  )
+
+  const weeklyReviews = (
+    db.prepare('SELECT * FROM weekly_reviews ORDER BY week_start').all() as unknown as ReviewRow[]
+  ).map(mapReview)
+
+  return {
+    version: 1,
+    exportedAt: nowIso(),
+    oneThing: getOneThing(),
+    templates,
+    exercises,
+    exerciseProgress,
+    presets,
+    sessions,
+    weeklyReviews,
+  }
+}
+
+export function restoreBackup(data: AppExport): void {
+  transaction(() => {
+    db.exec('DELETE FROM session_sections')
+    db.exec('DELETE FROM exercise_progress')
+    db.exec('DELETE FROM sessions')
+    db.exec('DELETE FROM template_sections')
+    db.exec('DELETE FROM exercises')
+    db.exec('DELETE FROM templates')
+    db.exec('DELETE FROM presets')
+    db.exec('DELETE FROM weekly_reviews')
+
+    const insertTemplate = db.prepare(
+      'INSERT INTO templates (id, slug, name, is_builtin, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    const insertTemplateSection = db.prepare(
+      'INSERT INTO template_sections (template_id, position, name, minutes) VALUES (?, ?, ?, ?)',
+    )
+    for (const template of data.templates) {
+      insertTemplate.run(
+        template.id,
+        template.slug,
+        template.name,
+        template.isBuiltin ? 1 : 0,
+        nowIso(),
+        nowIso(),
+      )
+      template.sections.forEach((section, position) => {
+        insertTemplateSection.run(template.id, position, section.name, section.minutes)
+      })
+    }
+
+    const insertExercise = db.prepare(
+      'INSERT INTO exercises (id, name, has_timing, difficulty, tags, tab_text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    )
+    for (const exercise of data.exercises) {
+      insertExercise.run(
+        exercise.id,
+        exercise.name,
+        exercise.hasTiming ? 1 : 0,
+        exercise.difficulty,
+        JSON.stringify(exercise.tags),
+        exercise.tabText,
+        exercise.createdAt,
+        exercise.updatedAt,
+      )
+    }
+
+    const insertProgress = db.prepare(
+      `INSERT INTO exercise_progress
+       (id, exercise_id, session_id, max_clean_bpm, avg_bpm, duration_seconds, clean_streak, self_rating, notes, completed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    for (const entry of data.exerciseProgress) {
+      insertProgress.run(
+        entry.id,
+        entry.exerciseId,
+        entry.sessionId,
+        entry.maxCleanBpm,
+        entry.avgBpm,
+        entry.durationSeconds,
+        entry.cleanStreak,
+        entry.selfRating,
+        entry.notes,
+        entry.completedAt,
+      )
+    }
+
+    const insertPreset = db.prepare(
+      'INSERT INTO presets (id, slug, name, is_builtin, bpm, beats, beat_unit, subdivision, accents, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    )
+    for (const preset of data.presets) {
+      insertPreset.run(
+        preset.id,
+        preset.slug,
+        preset.name,
+        preset.isBuiltin ? 1 : 0,
+        preset.bpm,
+        preset.beats,
+        preset.beatUnit,
+        preset.subdivision,
+        JSON.stringify(preset.accents),
+        nowIso(),
+      )
+    }
+
+    const insertSession = db.prepare(
+      `INSERT INTO sessions
+       (id, template_id, template_name, theme, kind, auto_advance, status, started_at, completed_at, mood)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    const insertSessionSection = db.prepare(
+      'INSERT INTO session_sections (session_id, position, name, planned_seconds, elapsed_seconds, notes, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    )
+    for (const session of data.sessions) {
+      insertSession.run(
+        session.id,
+        session.templateId,
+        session.templateName,
+        session.theme,
+        session.kind,
+        session.autoAdvance ? 1 : 0,
+        session.status,
+        session.startedAt,
+        session.completedAt,
+        session.mood,
+      )
+      for (const section of session.sections) {
+        insertSessionSection.run(
+          session.id,
+          section.position,
+          section.name,
+          section.plannedSeconds,
+          section.elapsedSeconds,
+          section.notes,
+          section.completedAt,
+        )
+      }
+    }
+
+    const insertReview = db.prepare(
+      'INSERT INTO weekly_reviews (week_start, practiced_everyday, streak_count, improved, focus, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    for (const review of data.weeklyReviews) {
+      insertReview.run(
+        review.weekStart,
+        review.practicedEveryday ? 1 : 0,
+        review.streakCount,
+        review.improved,
+        review.focus,
+        review.createdAt,
+      )
+    }
+
+    setOneThing(data.oneThing)
+  })
+  // Re-seed so built-ins exist even if the backup predates them.
+  seedDatabase(db)
 }

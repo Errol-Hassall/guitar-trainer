@@ -19,6 +19,7 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
+  db.exec('DELETE FROM weekly_reviews')
   db.exec('DELETE FROM exercise_progress')
   db.exec('DELETE FROM exercises')
   db.exec('DELETE FROM session_sections')
@@ -395,5 +396,115 @@ describe('exercises', () => {
     repo.deleteExercise(id)
     expect(repo.getExercise(id)).toBeNull()
     expect(repo.listProgress(id)).toEqual([])
+  })
+})
+
+describe('workflow (streaks, mood, reviews)', () => {
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const timedInput = {
+    name: 'Picking drill',
+    hasTiming: true,
+    difficulty: 3,
+    tags: ['Technique'],
+    tabText: '',
+  }
+
+  it('lists session dates in UTC for streak computation', () => {
+    expect(repo.listSessionDates()).toEqual([])
+
+    const sessionId = repo.startSession({
+      templateId: dailyTemplateId(),
+      kind: 'full',
+      theme: 'Picking & Pulse',
+    })
+    repo.completeSession(sessionId)
+    repo.startRestDay('Light & Reflective')
+
+    expect(repo.listSessionDates()).toEqual([todayKey, todayKey])
+  })
+
+  it('sets a mood on completed sessions and exposes it in summaries', () => {
+    const sessionId = repo.startSession({
+      templateId: dailyTemplateId(),
+      kind: 'light',
+      theme: 'Picking & Pulse',
+    })
+    expect(repo.getSession(sessionId)?.mood).toBeNull()
+
+    repo.completeSession(sessionId)
+    repo.setSessionMood(sessionId, 'energized')
+    expect(repo.getSession(sessionId)?.mood).toBe('energized')
+    expect(repo.listSessions(10)[0].mood).toBe('energized')
+
+    expect(() => repo.setSessionMood(99_999, 'neutral')).toThrow(/not found/i)
+  })
+
+  it('saves one weekly review per week and pushes the focus into the one thing', () => {
+    const weekStart = '2026-11-23'
+    expect(repo.getWeeklyReview(weekStart)).toBeNull()
+
+    repo.saveWeeklyReview({
+      weekStart,
+      practicedEveryday: true,
+      streakCount: 7,
+      improved: 'Cleaner picking.',
+      focus: 'Slurs under the click.',
+    })
+    expect(repo.getOneThing()).toBe('Slurs under the click.')
+
+    const saved = repo.getWeeklyReview(weekStart)
+    expect(saved?.practicedEveryday).toBe(true)
+    expect(saved?.streakCount).toBe(7)
+
+    // Re-saving the same week updates in place.
+    repo.saveWeeklyReview({
+      weekStart,
+      practicedEveryday: false,
+      streakCount: 8,
+      improved: '',
+      focus: '',
+    })
+    const updated = repo.getWeeklyReview(weekStart)
+    expect(updated?.practicedEveryday).toBe(false)
+    expect(repo.listRecentReviews(5)).toHaveLength(1)
+    // An empty focus leaves the one thing untouched.
+    expect(repo.getOneThing()).toBe('Slurs under the click.')
+  })
+
+  it('restores a full backup after data loss', () => {
+    const template = repo.createTemplate({
+      name: 'Backup drill',
+      sections: [{ name: 'Focus', minutes: 10 }],
+    })
+    const exerciseId = repo.createExercise(timedInput).id
+    repo.logProgress({ exerciseId, maxCleanBpm: 110 })
+    const sessionId = repo.startSession({
+      templateId: dailyTemplateId(),
+      kind: 'full',
+      theme: 'Picking & Pulse',
+    })
+    repo.completeSession(sessionId)
+    repo.setSessionMood(sessionId, 'drained')
+
+    const backup = repo.dumpAll()
+
+    // Simulate data loss.
+    db.exec('DELETE FROM exercise_progress')
+    db.exec('DELETE FROM exercises')
+    db.exec('DELETE FROM session_sections')
+    db.exec('DELETE FROM sessions')
+    db.exec('DELETE FROM template_sections')
+    db.exec('DELETE FROM templates')
+    expect(repo.listTemplates().some((t) => t.id === template.id)).toBe(false)
+
+    repo.restoreBackup(backup)
+
+    const restored = repo.listTemplates().find((t) => t.name === 'Backup drill')
+    expect(restored?.id).toBe(template.id)
+    expect(repo.getExercise(exerciseId)?.name).toBe('Picking drill')
+    expect(repo.listProgress(exerciseId)[0].maxCleanBpm).toBe(110)
+    const restoredSession = repo.getSession(sessionId)
+    expect(restoredSession?.mood).toBe('drained')
+    expect(restoredSession?.templateName).toBe('Daily 60')
   })
 })

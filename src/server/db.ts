@@ -103,6 +103,19 @@ const MIGRATIONS: string[] = [
   CREATE INDEX idx_exercise_progress_exercise
     ON exercise_progress(exercise_id, completed_at DESC);
   `,
+  `
+  ALTER TABLE sessions ADD COLUMN mood TEXT CHECK (mood IN ('energized', 'neutral', 'drained'));
+
+  CREATE TABLE weekly_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_start TEXT NOT NULL UNIQUE,
+    practiced_everyday INTEGER NOT NULL DEFAULT 0 CHECK (practiced_everyday IN (0, 1)),
+    streak_count INTEGER NOT NULL DEFAULT 0 CHECK (streak_count >= 0),
+    improved TEXT NOT NULL DEFAULT '',
+    focus TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  `,
 ]
 
 export const databasePath = resolve(

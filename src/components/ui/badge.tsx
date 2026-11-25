@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 
 type Variant = 'default' | 'accent' | 'teal' | 'danger' | 'success'
 
@@ -13,12 +13,14 @@ const variantClasses: Record<Variant, string> = {
 export function Badge({
   variant = 'default',
   children,
+  ...rest
 }: {
   variant?: Variant
   children: ReactNode
-}) {
+} & HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
+      {...rest}
       className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${variantClasses[variant]}`}
     >
       {children}

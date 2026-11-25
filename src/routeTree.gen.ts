@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MetronomeRouteImport } from './routes/metronome'
+import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as ExercisesIndexRouteImport } from './routes/exercises/index'
 import { Route as ExercisesExerciseIdRouteImport } from './routes/exercises/$exerciseId'
 import { Route as ExercisesNewRouteImport } from './routes/exercises/new'
@@ -25,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataRoute = DataRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -33,6 +40,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const MetronomeRoute = MetronomeRouteImport.update({
   id: '/metronome',
   path: '/metronome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExercisesIndexRoute = ExercisesIndexRouteImport.update({
@@ -73,8 +85,10 @@ const TemplatesNewRoute = TemplatesNewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/progress': typeof ProgressRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -85,8 +99,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/progress': typeof ProgressRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -98,8 +114,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/progress': typeof ProgressRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
   '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
@@ -112,8 +130,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/data'
     | '/history'
     | '/metronome'
+    | '/progress'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -124,8 +144,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/data'
     | '/history'
     | '/metronome'
+    | '/progress'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -136,8 +158,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/data'
     | '/history'
     | '/metronome'
+    | '/progress'
     | '/exercises/$exerciseId'
     | '/exercises/new'
     | '/sessions/$sessionId'
@@ -149,8 +173,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DataRoute: typeof DataRoute
   HistoryRoute: typeof HistoryRoute
   MetronomeRoute: typeof MetronomeRoute
+  ProgressRoute: typeof ProgressRoute
   ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
   ExercisesNewRoute: typeof ExercisesNewRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
@@ -169,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data': {
+      id: '/data'
+      path: '/data'
+      fullPath: '/data'
+      preLoaderRoute: typeof DataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
@@ -181,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/metronome'
       fullPath: '/metronome'
       preLoaderRoute: typeof MetronomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/exercises/': {
@@ -237,8 +277,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DataRoute: DataRoute,
   HistoryRoute: HistoryRoute,
   MetronomeRoute: MetronomeRoute,
+  ProgressRoute: ProgressRoute,
   ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,
   ExercisesNewRoute: ExercisesNewRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,

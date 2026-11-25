@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import {
   Check,
   Flag,
@@ -58,6 +58,7 @@ export function SessionTimer({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const router = useRouter()
 
   const sectionsRef = useRef(sections)
   sectionsRef.current = sections
@@ -133,6 +134,8 @@ export function SessionTimer({
       setSections(updated)
       if (result.sessionCompleted) {
         setFinishedEarly(true)
+        // Refresh route data so the completed state (and mood prompt) shows.
+        void router.invalidate()
         return
       }
       const nextIndex = firstIncompleteIndex(updated)
@@ -205,6 +208,7 @@ export function SessionTimer({
       await completeSession({ data: { id: session.id } })
       setRunning(false)
       setFinishedEarly(true)
+      void router.invalidate()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not end the session.')
     } finally {

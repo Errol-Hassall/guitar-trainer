@@ -24,6 +24,7 @@ export const Route = createRootRoute({
         content: 'A private metronome and practice-session timer for guitarists.',
       },
     ],
+    links: [{ rel: 'manifest', href: '/manifest.webmanifest' }],
   }),
   shellComponent: RootDocument,
   notFoundComponent: () => (
@@ -61,13 +62,15 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               <Guitar className="size-5 text-accent" aria-hidden="true" />
               {APP_NAME}
             </Link>
-            <nav aria-label="Main" className="flex items-center gap-1">
+            <nav aria-label="Main" className="flex flex-wrap items-center gap-1">
               {[
                 { to: '/', label: 'Home' },
                 { to: '/metronome', label: 'Metronome' },
                 { to: '/templates', label: 'Templates' },
                 { to: '/exercises', label: 'Exercises' },
                 { to: '/history', label: 'History' },
+                { to: '/progress', label: 'Progress' },
+                { to: '/data', label: 'Data' },
               ].map((item) => (
                 <Link
                   key={item.to}
@@ -87,6 +90,13 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         </header>
         {children}
         <Scripts />
+        {import.meta.env.PROD ? (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js') }) }`,
+            }}
+          />
+        ) : null}
       </body>
     </html>
   )

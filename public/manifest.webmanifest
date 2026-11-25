@@ -1,0 +1,13 @@
+{
+  "name": "Guitar Trainer",
+  "short_name": "Guitar Trainer",
+  "description": "A private metronome and practice-session timer for guitarists.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090d12",
+  "theme_color": "#090d12",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (Phases 1–3)
+## Features (Phases 1–4)
 
 **Metronome**
 
@@ -30,6 +30,15 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Timed exercises log max clean BPM, average BPM, duration and clean streak; a dependency-free SVG chart shows max clean BPM over time
 - Untimed exercises log a self rating (1–5), duration and notes
 - Progress logs attach to the active session when one is running, so history stays linked
+
+**Workflow & data**
+
+- Streak of consecutive covered UTC days (full, light and rest days all count; a rest day is the consolidation mechanism), shown on home
+- One-tap mood at the end of practice sessions (energized / neutral / drained) with badges in session lists
+- Weekly review card: pre-filled facts (practiced every day or emergency?, current streak) plus "one thing that improved" and "one thing to focus on next week"; the focus answer becomes the pinned one-thing note; one row per ISO week, re-savable
+- Monthly progress check page with built-in milestone lists for months 1–2 / 3–4 / 5–6 / 7–12 (a reference, not ticked state)
+- Data page: Markdown export, full JSON backup (versioned), session CSV for spreadsheets; restore from a JSON backup replaces all data transactionally and re-seeds built-ins; Markdown import reads the Templates section of an export (existing names are skipped)
+- Installable PWA: web manifest, SVG icon and a service worker that caches the app shell (network-first). The server must be running for data changes — there is no offline data mode.
 
 ## Quickstart
 
@@ -97,11 +106,12 @@ src/lib/                pure logic + canonical types (no I/O)
 ### Data model
 
 `templates` (1–n) `template_sections` · `sessions` (1–n) `session_sections` ·
-`exercises` (1–n) `exercise_progress` · `presets` · `app_state` (single row:
-weekly focus note). Sessions snapshot the template's name and sections at start
-time, so editing a template never rewrites history. Progress rows optionally
-reference the active session (`ON DELETE SET NULL`) and cascade with their
-exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
+`exercises` (1–n) `exercise_progress` · `presets` · `weekly_reviews` (one row
+per ISO week, upserted) · `app_state` (single row: weekly focus note). Sessions
+snapshot the template's name and sections at start time, so editing a template
+never rewrites history; they also carry an optional mood. Progress rows
+optionally reference the active session (`ON DELETE SET NULL`) and cascade with
+their exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
 
 ## Testing
 
@@ -113,8 +123,8 @@ bun run test:all   # the gate: typecheck → lint → vitest (unit + integration
   and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
-  session lifecycle, clamping, rest days, presets, exercises + progress and the
-  focus note.
+  session lifecycle, clamping, rest days, presets, exercises + progress, the
+  focus note, streak dates, moods, weekly reviews and full backup restore.
 - **E2E** (`e2e/`, Playwright): production build served on `127.0.0.1:3100`
   with a fresh throwaway DB; 1 worker, no retries, traces/screenshots/HTML
   report on failure. System Chromium is used when present, otherwise the
@@ -132,9 +142,12 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
-Phases 4–8 of the original spec are out of scope: speed trainer, focus mode,
-audio attachment / reference takes (Phase 5), PWA/offline support (service
-worker, IndexedDB), automatic Sunday theme selection and everything else beyond
-the metronome, sessions and exercises. The server-function layer is deliberately
-kept as a thin validated boundary so a future auth layer can slot in without
-restructuring.
+Phases 5–8 of the original spec are out of scope: speed trainer, focus mode,
+audio attachment / reference takes (Phase 5), automatic Sunday theme selection
+and everything beyond the metronome, sessions, exercises and workflow. Also
+skipped in Phase 4: full offline data access (the PWA shell installs and loads
+from cache, but data changes need the server running — an IndexedDB/WASM mirror
+would be a separate project), File System Access API folder coexistence, and
+Markdown import of session logs (import covers templates only). The
+server-function layer is deliberately kept as a thin validated boundary so a
+future auth layer can slot in without restructuring.

@@ -66,6 +66,18 @@ export type SessionKind = (typeof SESSION_KINDS)[number]
 
 export type SessionStatus = 'active' | 'completed'
 
+export const MOODS = ['energized', 'neutral', 'drained'] as const
+export type Mood = (typeof MOODS)[number]
+
+export interface WeeklyReview {
+  weekStart: string
+  practicedEveryday: boolean
+  streakCount: number
+  improved: string
+  focus: string
+  createdAt: string
+}
+
 export interface TemplateSection {
   id: number
   position: number
@@ -123,6 +135,7 @@ export interface PracticeSession {
   status: SessionStatus
   startedAt: string
   completedAt: string | null
+  mood: Mood | null
   sections: SessionSection[]
 }
 
@@ -137,6 +150,7 @@ export interface SessionSummary {
   sectionCount: number
   completedSections: number
   totalSeconds: number
+  mood: Mood | null
 }
 
 export interface MetronomePreset {
@@ -210,4 +224,53 @@ export interface LogProgressInput {
   cleanStreak?: number | null
   selfRating?: number | null
   notes?: string
+}
+
+/** Shape of the JSON backup file (versioned; restore validates against this). */
+export interface AppExport {
+  version: 1
+  exportedAt: string
+  oneThing: string
+  templates: {
+    id: number
+    slug: string | null
+    name: string
+    isBuiltin: boolean
+    sections: { name: string; minutes: number }[]
+  }[]
+  exercises: Exercise[]
+  exerciseProgress: {
+    id: number
+    exerciseId: number
+    sessionId: number | null
+    maxCleanBpm: number | null
+    avgBpm: number | null
+    durationSeconds: number
+    cleanStreak: number | null
+    selfRating: number | null
+    notes: string
+    completedAt: string
+  }[]
+  presets: MetronomePreset[]
+  sessions: {
+    id: number
+    templateId: number | null
+    templateName: string
+    theme: Theme
+    kind: SessionKind
+    autoAdvance: boolean
+    status: SessionStatus
+    startedAt: string
+    completedAt: string | null
+    mood: Mood | null
+    sections: {
+      position: number
+      name: string
+      plannedSeconds: number
+      elapsedSeconds: number
+      notes: string
+      completedAt: string | null
+    }[]
+  }[]
+  weeklyReviews: WeeklyReview[]
 }

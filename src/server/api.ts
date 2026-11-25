@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import * as repo from './repo'
+import { exportJson, exportMarkdown, sessionsCsv } from '#/lib/export'
 import {
   autoAdvanceSchema,
   completeSectionSchema,
@@ -9,17 +10,23 @@ import {
   deletePresetSchema,
   deleteTemplateSchema,
   exerciseIdSchema,
+  importTemplatesSchema,
   listSessionsSchema,
   logProgressSchema,
   oneThingSchema,
+  recentReviewsSchema,
+  restoreBackupSchema,
   restDaySchema,
   savePresetSchema,
   saveSectionNotesSchema,
+  saveWeeklyReviewSchema,
   sessionIdSchema,
+  setMoodSchema,
   startSessionSchema,
   templateIdSchema,
   updateExerciseSchema,
   updateTemplateSchema,
+  weeklyReviewIdSchema,
 } from './schemas'
 
 export const listTemplates = createServerFn({ method: 'GET' }).handler(() =>
@@ -145,3 +152,61 @@ export const logProgress = createServerFn({ method: 'POST' })
     repo.logProgress(data)
     return true
   })
+
+// --- Workflow -----------------------------------------------------------------
+
+export const listSessionDates = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listSessionDates(),
+)
+
+export const listPracticedDates = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listPracticedDates(),
+)
+
+export const setSessionMood = createServerFn({ method: 'POST' })
+  .validator(setMoodSchema)
+  .handler(({ data }) => {
+    repo.setSessionMood(data.id, data.mood)
+    return true
+  })
+
+export const getWeeklyReview = createServerFn({ method: 'GET' })
+  .validator(weeklyReviewIdSchema)
+  .handler(({ data }) => repo.getWeeklyReview(data.weekStart))
+
+export const saveWeeklyReview = createServerFn({ method: 'POST' })
+  .validator(saveWeeklyReviewSchema)
+  .handler(({ data }) => {
+    repo.saveWeeklyReview(data)
+    return true
+  })
+
+export const listRecentReviews = createServerFn({ method: 'GET' })
+  .validator(recentReviewsSchema)
+  .handler(({ data }) => repo.listRecentReviews(data.limit))
+
+// --- Data & backup --------------------------------------------------------------
+
+export const getMarkdownExport = createServerFn({ method: 'GET' }).handler(() =>
+  exportMarkdown(repo.dumpAll()),
+)
+
+export const getJsonExport = createServerFn({ method: 'GET' }).handler(() =>
+  exportJson(repo.dumpAll()),
+)
+
+export const getCsvExport = createServerFn({ method: 'GET' }).handler(() => {
+  const dump = repo.dumpAll()
+  return sessionsCsv(dump.sessions)
+})
+
+export const restoreBackup = createServerFn({ method: 'POST' })
+  .validator(restoreBackupSchema)
+  .handler(({ data }) => {
+    repo.restoreBackup(data)
+    return true
+  })
+
+export const importTemplates = createServerFn({ method: 'POST' })
+  .validator(importTemplatesSchema)
+  .handler(({ data }) => repo.importTemplates(data.markdown))

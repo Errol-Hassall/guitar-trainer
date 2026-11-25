@@ -9,11 +9,16 @@ import {
   sessionKindLabel,
   themeForWeekday,
 } from '#/lib/sessions'
+import { computeStreak, weekStartUtc } from '#/lib/streaks'
 import {
   completeSession,
   getActiveSession,
   getOneThing,
+  getWeeklyReview,
+  listPracticedDates,
+  listRecentReviews,
   listSessions,
+  listSessionDates,
   listTemplates,
   startRestDay,
   startSession,
@@ -24,22 +29,45 @@ import { Card } from '#/components/ui/card'
 import { Field, controlClass } from '#/components/ui/field'
 import { PageHeader } from '#/components/ui/page-header'
 import { OneThingCard } from '#/components/one-thing-card'
+import { WeeklyReviewCard } from '#/components/weekly-review'
 
 export const Route = createFileRoute('/')({
   component: Home,
   loader: async () => {
-    const [templates, active, recent, oneThing] = await Promise.all([
-      listTemplates(),
-      getActiveSession(),
-      listSessions({ data: { limit: 5 } }),
-      getOneThing(),
+    const [templates, active, recent, oneThing, sessionDates, practicedDates] =
+      await Promise.all([
+        listTemplates(),
+        getActiveSession(),
+        listSessions({ data: { limit: 5 } }),
+        getOneThing(),
+        listSessionDates(),
+        listPracticedDates(),
+      ])
+
+    const todayKey = new Date().toISOString().slice(0, 10)
+    const weekStart = weekStartUtc(todayKey)
+    const [currentReview, recentReviews] = await Promise.all([
+      getWeeklyReview({ data: { weekStart } }),
+      listRecentReviews({ data: { limit: 3 } }),
     ])
+
+    const [year, month, day] = weekStart.split('-').map(Number)
+    const practicedSet = new Set(practicedDates)
+    const practicedEveryday = Array.from({ length: 7 }, (_, offset) =>
+      new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10),
+    ).every((weekDay) => practicedSet.has(weekDay))
+
     return {
       templates,
       active,
       recent,
       oneThing,
       todayTheme: themeForWeekday(new Date()),
+      streakCount: computeStreak(new Set(sessionDates), todayKey),
+      weekStart,
+      currentReview,
+      practicedEveryday,
+      recentReviews,
     }
   },
 })
@@ -100,7 +128,11 @@ function Home() {
         title="Practice"
         description={
           <>
-            Today’s theme: <Badge variant="accent">{data.todayTheme}</Badge>
+            Today’s theme: <Badge variant="accent">{data.todayTheme}</Badge>{' '}
+            <span className="inline-flex items-center gap-1">
+              <Flame className="size-4 text-accent" aria-hidden="true" />
+              {data.streakCount}-day streak
+            </span>
           </>
         }
       />
@@ -187,6 +219,14 @@ function Home() {
 
       <OneThingCard initial={data.oneThing} />
 
+      <WeeklyReviewCard
+        weekStart={data.weekStart}
+        currentReview={data.currentReview}
+        practicedEveryday={data.practicedEveryday}
+        streakCount={data.streakCount}
+        recentReviews={data.recentReviews}
+      />
+
       <Card
         title="Recent sessions"
         description={
@@ -234,6 +274,11 @@ export function SessionRow({ session }: { session: SessionSummary }) {
           <Badge variant={session.kind === 'rest' ? 'teal' : 'default'}>
             {sessionKindLabel(session.kind)}
           </Badge>
+          {session.mood ? (
+            <Badge data-session-mood={session.mood} variant="success">
+              {session.mood}
+            </Badge>
+          ) : null}
           {session.status === 'active' ? (
             <Badge variant="accent">active</Badge>
           ) : null}

@@ -32,7 +32,7 @@ test.describe('sessions', () => {
   test('shows the one-thing note at the top of a session', async ({ page }) => {
     await page.goto('/')
     await page.getByLabel('Focus note').fill('Keep the low E clean.')
-    await page.getByRole('button', { name: 'Save' }).click()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
     await expect(page.locator('[data-save-status="saved"]')).toBeVisible()
 
     await createSingleSectionTemplate(page, 'E2E notes')

@@ -4,7 +4,10 @@ import {
   exerciseInputSchema,
   listSessionsSchema,
   logProgressSchema,
+  restoreBackupSchema,
   savePresetSchema,
+  saveWeeklyReviewSchema,
+  setMoodSchema,
   startSessionSchema,
   templateInputSchema,
 } from '#/server/schemas'
@@ -152,5 +155,87 @@ describe('logProgressSchema', () => {
     expect(logProgressSchema.safeParse({ exerciseId: 1, durationSeconds: -1 }).success).toBe(
       false,
     )
+  })
+})
+
+describe('setMoodSchema', () => {
+  it('accepts the three moods and rejects anything else', () => {
+    for (const mood of ['energized', 'neutral', 'drained']) {
+      expect(setMoodSchema.safeParse({ id: 1, mood }).success).toBe(true)
+    }
+    expect(setMoodSchema.safeParse({ id: 1, mood: 'exhausted' }).success).toBe(false)
+    expect(setMoodSchema.safeParse({ mood: 'neutral' }).success).toBe(false)
+  })
+})
+
+describe('saveWeeklyReviewSchema', () => {
+  const valid = {
+    weekStart: '2026-11-23',
+    practicedEveryday: true,
+    streakCount: 7,
+    improved: 'Cleaner picking.',
+    focus: 'Slurs under the click.',
+  }
+
+  it('accepts a valid review', () => {
+    expect(saveWeeklyReviewSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it('rejects bad week keys, negative streaks and oversized notes', () => {
+    expect(
+      saveWeeklyReviewSchema.safeParse({ ...valid, weekStart: '23/11/2026' }).success,
+    ).toBe(false)
+    expect(saveWeeklyReviewSchema.safeParse({ ...valid, streakCount: -1 }).success).toBe(false)
+    expect(
+      saveWeeklyReviewSchema.safeParse({ ...valid, focus: 'x'.repeat(4001) }).success,
+    ).toBe(false)
+  })
+})
+
+describe('restoreBackupSchema', () => {
+  const emptyBackup = {
+    version: 1,
+    exportedAt: '2026-11-25T10:00:00.000Z',
+    oneThing: '',
+    templates: [],
+    exercises: [],
+    exerciseProgress: [],
+    presets: [],
+    sessions: [],
+    weeklyReviews: [],
+  }
+
+  it('accepts an empty version-1 backup', () => {
+    expect(restoreBackupSchema.safeParse(emptyBackup).success).toBe(true)
+  })
+
+  it('rejects unknown versions and broken rows', () => {
+    expect(restoreBackupSchema.safeParse({ ...emptyBackup, version: 2 }).success).toBe(false)
+    const badTemplate = {
+      ...emptyBackup,
+      templates: [
+        { id: 1, slug: null, name: 'X', isBuiltin: false, sections: [{ name: 'S', minutes: 0 }] },
+      ],
+    }
+    expect(restoreBackupSchema.safeParse(badTemplate).success).toBe(false)
+    const badSession = {
+      ...emptyBackup,
+      sessions: [
+        {
+          id: 1,
+          templateId: null,
+          templateName: 'Rest day',
+          theme: 'Picking & Pulse',
+          kind: 'rest',
+          autoAdvance: true,
+          status: 'completed',
+          startedAt: '2026-11-25T09:00:00.000Z',
+          completedAt: null,
+          mood: 'weird',
+          sections: [],
+        },
+      ],
+    }
+    expect(restoreBackupSchema.safeParse(badSession).success).toBe(false)
   })
 })
