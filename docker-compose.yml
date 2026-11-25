@@ -1,0 +1,19 @@
+services:
+  guitar-trainer:
+    build: .
+    image: guitar-trainer:local
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      DATABASE_PATH: /data/guitar-trainer.db
+      TZ: UTC
+    volumes:
+      - guitar-trainer-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  guitar-trainer-data:

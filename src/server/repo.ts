@@ -1,0 +1,491 @@
+import { db } from './db'
+import type {
+  MetronomePreset,
+  PracticeSession,
+  PresetInput,
+  SessionSection,
+  SessionStatus,
+  SessionSummary,
+  StartSessionInput,
+  Template,
+  TemplateInput,
+  Theme,
+  UpdateTemplateInput,
+} from '#/lib/types'
+import { defaultAccents, resizeAccents } from '#/lib/metronome'
+import { plannedSeconds } from '#/lib/sessions'
+
+interface TemplateRow {
+  id: number
+  slug: string | null
+  name: string
+  is_builtin: number
+  created_at: string
+  updated_at: string
+}
+
+interface TemplateSectionRow {
+  id: number
+  template_id: number
+  position: number
+  name: string
+  minutes: number
+}
+
+interface SessionRow {
+  id: number
+  template_id: number | null
+  template_name: string
+  theme: Theme
+  kind: 'full' | 'light' | 'rest'
+  auto_advance: number
+  status: SessionStatus
+  started_at: string
+  completed_at: string | null
+}
+
+interface SessionSectionRow {
+  id: number
+  session_id: number
+  position: number
+  name: string
+  planned_seconds: number
+  elapsed_seconds: number
+  notes: string
+  completed_at: string | null
+}
+
+interface PresetRow {
+  id: number
+  slug: string | null
+  name: string
+  is_builtin: number
+  bpm: number
+  beats: number
+  beat_unit: number
+  subdivision: MetronomePreset['subdivision']
+  accents: string
+  created_at: string
+}
+
+function nowIso(): string {
+  return new Date().toISOString()
+}
+
+function transaction<T>(work: () => T): T {
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    const result = work()
+    db.exec('COMMIT')
+    return result
+  } catch (error) {
+    db.exec('ROLLBACK')
+    throw error
+  }
+}
+
+function assertBuiltinGuard(isBuiltin: number, noun: string): void {
+  if (isBuiltin === 1) {
+    throw new Error(`Built-in ${noun}s cannot be modified. Make a copy first.`)
+  }
+}
+
+function mapTemplate(row: TemplateRow, sections: TemplateSectionRow[]): Template {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    isBuiltin: row.is_builtin === 1,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    sections: sections.map((section) => ({
+      id: section.id,
+      position: section.position,
+      name: section.name,
+      minutes: section.minutes,
+    })),
+  }
+}
+
+function mapSection(row: SessionSectionRow): SessionSection {
+  return {
+    id: row.id,
+    position: row.position,
+    name: row.name,
+    plannedSeconds: row.planned_seconds,
+    elapsedSeconds: row.elapsed_seconds,
+    notes: row.notes,
+    completedAt: row.completed_at,
+  }
+}
+
+function mapSession(row: SessionRow, sections: SessionSectionRow[]): PracticeSession {
+  return {
+    id: row.id,
+    templateId: row.template_id,
+    templateName: row.template_name,
+    theme: row.theme,
+    kind: row.kind,
+    autoAdvance: row.auto_advance === 1,
+    status: row.status,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    sections: sections.map(mapSection),
+  }
+}
+
+function parseAccents(json: string, beats: number): MetronomePreset['accents'] {
+  try {
+    const parsed: unknown = JSON.parse(json)
+    if (!Array.isArray(parsed)) return defaultAccents(beats)
+    return resizeAccents(
+      parsed.filter((value): value is 0 | 1 | 2 => value === 0 || value === 1 || value === 2),
+      beats,
+    )
+  } catch {
+    return defaultAccents(beats)
+  }
+}
+
+function mapPreset(row: PresetRow): MetronomePreset {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    isBuiltin: row.is_builtin === 1,
+    bpm: row.bpm,
+    beats: row.beats,
+    beatUnit: row.beat_unit as MetronomePreset['beatUnit'],
+    subdivision: row.subdivision,
+    accents: parseAccents(row.accents, row.beats),
+  }
+}
+
+function getTemplateRow(id: number): TemplateRow {
+  const row = db.prepare('SELECT * FROM templates WHERE id = ?').get(id) as
+    | TemplateRow
+    | undefined
+  if (!row) throw new Error('Template not found.')
+  return row
+}
+
+function listSectionsForTemplate(templateId: number): TemplateSectionRow[] {
+  return (
+    db
+      .prepare(
+        `SELECT * FROM template_sections
+         WHERE template_id = ? ORDER BY position`,
+      )
+      .all(templateId) as unknown as TemplateSectionRow[]
+  )
+}
+
+function listSectionsForSession(sessionId: number): SessionSectionRow[] {
+  return (
+    db
+      .prepare(
+        `SELECT * FROM session_sections
+         WHERE session_id = ? ORDER BY position`,
+      )
+      .all(sessionId) as unknown as SessionSectionRow[]
+  )
+}
+
+export function listTemplates(): Template[] {
+  const rows = (
+    db
+      .prepare('SELECT * FROM templates ORDER BY is_builtin DESC, name')
+      .all() as unknown as TemplateRow[]
+  ).map((row) => mapTemplate(row, listSectionsForTemplate(row.id)))
+  return rows
+}
+
+export function getTemplate(id: number): Template | null {
+  const row = db.prepare('SELECT * FROM templates WHERE id = ?').get(id) as
+    | TemplateRow
+    | undefined
+  if (!row) return null
+  return mapTemplate(row, listSectionsForTemplate(row.id))
+}
+
+export function createTemplate(input: TemplateInput): Template {
+  const id = transaction(() => {
+    const now = nowIso()
+    const result = db
+      .prepare(
+        `INSERT INTO templates (slug, name, is_builtin, created_at, updated_at)
+         VALUES (NULL, ?, 0, ?, ?)`,
+      )
+      .run(input.name, now, now)
+    const templateId = Number(result.lastInsertRowid)
+    const insert = db.prepare(
+      `INSERT INTO template_sections (template_id, position, name, minutes)
+       VALUES (?, ?, ?, ?)`,
+    )
+    input.sections.forEach((section, position) => {
+      insert.run(templateId, position, section.name, section.minutes)
+    })
+    return templateId
+  })
+  return getTemplate(id) as Template
+}
+
+export function updateTemplate(input: UpdateTemplateInput): Template {
+  const existing = getTemplateRow(input.id)
+  assertBuiltinGuard(existing.is_builtin, 'template')
+
+  transaction(() => {
+    db.prepare('UPDATE templates SET name = ?, updated_at = ? WHERE id = ?').run(
+      input.name,
+      nowIso(),
+      input.id,
+    )
+    db.prepare('DELETE FROM template_sections WHERE template_id = ?').run(input.id)
+    const insert = db.prepare(
+      `INSERT INTO template_sections (template_id, position, name, minutes)
+       VALUES (?, ?, ?, ?)`,
+    )
+    input.sections.forEach((section, position) => {
+      insert.run(input.id, position, section.name, section.minutes)
+    })
+  })
+
+  return getTemplate(input.id) as Template
+}
+
+export function deleteTemplate(id: number): void {
+  const existing = getTemplateRow(id)
+  assertBuiltinGuard(existing.is_builtin, 'template')
+  db.prepare('DELETE FROM templates WHERE id = ?').run(id)
+}
+
+function findActiveSessionId(): number | null {
+  const row = db
+    .prepare("SELECT id FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1")
+    .get() as { id: number } | undefined
+  return row?.id ?? null
+}
+
+export function startSession(input: StartSessionInput): number {
+  const template = getTemplate(input.templateId)
+  if (!template) throw new Error('Template not found.')
+
+  return transaction(() => {
+    if (findActiveSessionId() !== null) {
+      throw new Error('Finish or end the active session before starting a new one.')
+    }
+    const now = nowIso()
+    const result = db
+      .prepare(
+        `INSERT INTO sessions
+          (template_id, template_name, theme, kind, auto_advance, status, started_at, completed_at)
+         VALUES (?, ?, ?, ?, 1, 'active', ?, NULL)`,
+      )
+      .run(template.id, template.name, input.theme, input.kind, now)
+    const sessionId = Number(result.lastInsertRowid)
+
+    const insert = db.prepare(
+      `INSERT INTO session_sections
+        (session_id, position, name, planned_seconds, elapsed_seconds, notes, completed_at)
+       VALUES (?, ?, ?, ?, 0, '', NULL)`,
+    )
+    template.sections.forEach((section, position) => {
+      insert.run(
+        sessionId,
+        position,
+        section.name,
+        plannedSeconds(section.minutes, input.kind),
+      )
+    })
+    return sessionId
+  })
+}
+
+export function startRestDay(theme: Theme): number {
+  return transaction(() => {
+    if (findActiveSessionId() !== null) {
+      throw new Error('Finish or end the active session before logging a rest day.')
+    }
+    const now = nowIso()
+    const result = db
+      .prepare(
+        `INSERT INTO sessions
+          (template_id, template_name, theme, kind, auto_advance, status, started_at, completed_at)
+         VALUES (NULL, 'Rest day', ?, 'rest', 0, 'completed', ?, ?)`,
+      )
+      .run(theme, now, now)
+    return Number(result.lastInsertRowid)
+  })
+}
+
+export function getSession(id: number): PracticeSession | null {
+  const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(id) as
+    | SessionRow
+    | undefined
+  if (!row) return null
+  return mapSession(row, listSectionsForSession(row.id))
+}
+
+export function getActiveSession(): PracticeSession | null {
+  const row = db
+    .prepare(
+      "SELECT * FROM sessions WHERE status = 'active' ORDER BY started_at DESC LIMIT 1",
+    )
+    .get() as SessionRow | undefined
+  if (!row) return null
+  return mapSession(row, listSectionsForSession(row.id))
+}
+
+export function listSessions(limit: number): SessionSummary[] {
+  const rows = db
+    .prepare(
+      `SELECT s.id, s.template_name, s.theme, s.kind, s.status, s.started_at, s.completed_at,
+              COUNT(ss.id) AS section_count,
+              COALESCE(SUM(CASE WHEN ss.completed_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS completed_sections,
+              COALESCE(SUM(ss.elapsed_seconds), 0) AS total_seconds
+       FROM sessions s
+       LEFT JOIN session_sections ss ON ss.session_id = s.id
+       GROUP BY s.id
+       ORDER BY s.started_at DESC, s.id DESC
+       LIMIT ?`,
+    )
+    .all(limit) as unknown as (SessionRow & {
+      section_count: number
+      completed_sections: number
+      total_seconds: number
+    })[]
+
+  return rows.map((row) => ({
+    id: row.id,
+    templateName: row.template_name,
+    theme: row.theme,
+    kind: row.kind,
+    status: row.status,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    sectionCount: row.section_count,
+    completedSections: row.completed_sections,
+    totalSeconds: row.total_seconds,
+  }))
+}
+
+export function completeSection(
+  sectionId: number,
+  elapsedSeconds: number,
+): { sessionId: number; sessionCompleted: boolean } {
+  return transaction(() => {
+    const row = db
+      .prepare('SELECT * FROM session_sections WHERE id = ?')
+      .get(sectionId) as SessionSectionRow | undefined
+    if (!row) throw new Error('Section not found.')
+
+    if (row.completed_at === null) {
+      const elapsed = Math.min(Math.max(0, elapsedSeconds), row.planned_seconds)
+      db.prepare(
+        'UPDATE session_sections SET elapsed_seconds = ?, completed_at = ? WHERE id = ?',
+      ).run(elapsed, nowIso(), sectionId)
+    }
+
+    const remaining = db
+      .prepare(
+        'SELECT COUNT(*) AS count FROM session_sections WHERE session_id = ? AND completed_at IS NULL',
+      )
+      .get(row.session_id) as { count: number }
+
+    let sessionCompleted = false
+    if (remaining.count === 0) {
+      const updated = db
+        .prepare(
+          `UPDATE sessions SET status = 'completed', completed_at = ?
+           WHERE id = ? AND status = 'active'`,
+        )
+        .run(nowIso(), row.session_id)
+      sessionCompleted = Number(updated.changes) > 0
+    }
+
+    return { sessionId: row.session_id, sessionCompleted }
+  })
+}
+
+export function saveSectionNotes(sectionId: number, notes: string): void {
+  const updated = db
+    .prepare('UPDATE session_sections SET notes = ? WHERE id = ?')
+    .run(notes, sectionId)
+  if (Number(updated.changes) === 0) throw new Error('Section not found.')
+}
+
+export function setAutoAdvance(sessionId: number, autoAdvance: boolean): void {
+  const updated = db
+    .prepare('UPDATE sessions SET auto_advance = ? WHERE id = ?')
+    .run(autoAdvance ? 1 : 0, sessionId)
+  if (Number(updated.changes) === 0) throw new Error('Session not found.')
+}
+
+export function completeSession(sessionId: number): void {
+  const row = db
+    .prepare('SELECT id, status FROM sessions WHERE id = ?')
+    .get(sessionId) as { id: number; status: SessionStatus } | undefined
+  if (!row) throw new Error('Session not found.')
+  if (row.status === 'completed') return
+
+  db.prepare(
+    `UPDATE sessions SET status = 'completed', completed_at = ? WHERE id = ?`,
+  ).run(nowIso(), sessionId)
+}
+
+export function getOneThing(): string {
+  const row = db
+    .prepare('SELECT one_thing_to_fix FROM app_state WHERE id = 1')
+    .get() as { one_thing_to_fix: string } | undefined
+  return row?.one_thing_to_fix ?? ''
+}
+
+export function setOneThing(text: string): void {
+  const updated = db
+    .prepare('UPDATE app_state SET one_thing_to_fix = ?, updated_at = ? WHERE id = 1')
+    .run(text, nowIso())
+  if (Number(updated.changes) === 0) {
+    db.prepare(
+      'INSERT INTO app_state (id, one_thing_to_fix, updated_at) VALUES (1, ?, ?)',
+    ).run(text, nowIso())
+  }
+}
+
+export function listPresets(): MetronomePreset[] {
+  const rows = db
+    .prepare('SELECT * FROM presets ORDER BY is_builtin DESC, name')
+    .all() as unknown as PresetRow[]
+  return rows.map(mapPreset)
+}
+
+export function createPreset(input: PresetInput): MetronomePreset {
+  const now = nowIso()
+  const result = db
+    .prepare(
+      `INSERT INTO presets
+        (slug, name, is_builtin, bpm, beats, beat_unit, subdivision, accents, created_at)
+       VALUES (NULL, ?, 0, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      input.name,
+      input.bpm,
+      input.beats,
+      input.beatUnit,
+      input.subdivision,
+      JSON.stringify(input.accents),
+      now,
+    )
+  const row = db
+    .prepare('SELECT * FROM presets WHERE id = ?')
+    .get(Number(result.lastInsertRowid)) as unknown as PresetRow
+  return mapPreset(row)
+}
+
+export function deletePreset(id: number): void {
+  const row = db.prepare('SELECT is_builtin FROM presets WHERE id = ?').get(
+    id,
+  ) as { is_builtin: number } | undefined
+  if (!row) throw new Error('Preset not found.')
+  assertBuiltinGuard(row.is_builtin, 'preset')
+  db.prepare('DELETE FROM presets WHERE id = ?').run(id)
+}

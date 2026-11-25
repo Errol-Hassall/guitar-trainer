@@ -1,0 +1,12 @@
+.env
+data/
+.test-data/
+test-results/
+playwright-report/
+coverage/
+.output/
+node_modules/
+*.tsbuildinfo
+.DS_Store
+.vscode/
+.idea/
