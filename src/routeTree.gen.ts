@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MetronomeRouteImport } from './routes/metronome'
+import { Route as ExercisesIndexRouteImport } from './routes/exercises/index'
+import { Route as ExercisesExerciseIdRouteImport } from './routes/exercises/$exerciseId'
+import { Route as ExercisesNewRouteImport } from './routes/exercises/new'
 import { Route as SessionsSessionIdRouteImport } from './routes/sessions.$sessionId'
 import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
 import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
@@ -30,6 +33,21 @@ const HistoryRoute = HistoryRouteImport.update({
 const MetronomeRoute = MetronomeRouteImport.update({
   id: '/metronome',
   path: '/metronome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExercisesIndexRoute = ExercisesIndexRouteImport.update({
+  id: '/exercises/',
+  path: '/exercises/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExercisesExerciseIdRoute = ExercisesExerciseIdRouteImport.update({
+  id: '/exercises/$exerciseId',
+  path: '/exercises/$exerciseId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExercisesNewRoute = ExercisesNewRouteImport.update({
+  id: '/exercises/new',
+  path: '/exercises/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionsSessionIdRoute = SessionsSessionIdRouteImport.update({
@@ -57,18 +75,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
+  '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/exercises/': typeof ExercisesIndexRoute
   '/templates/': typeof TemplatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
+  '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/exercises': typeof ExercisesIndexRoute
   '/templates': typeof TemplatesIndexRoute
 }
 export interface FileRoutesById {
@@ -76,9 +100,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/metronome': typeof MetronomeRoute
+  '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
+  '/exercises/new': typeof ExercisesNewRoute
   '/sessions/$sessionId': typeof SessionsSessionIdRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/new': typeof TemplatesNewRoute
+  '/exercises/': typeof ExercisesIndexRoute
   '/templates/': typeof TemplatesIndexRoute
 }
 export interface FileRouteTypes {
@@ -87,27 +114,36 @@ export interface FileRouteTypes {
     | '/'
     | '/history'
     | '/metronome'
+    | '/exercises/$exerciseId'
+    | '/exercises/new'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/exercises/'
     | '/templates/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/history'
     | '/metronome'
+    | '/exercises/$exerciseId'
+    | '/exercises/new'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/exercises'
     | '/templates'
   id:
     | '__root__'
     | '/'
     | '/history'
     | '/metronome'
+    | '/exercises/$exerciseId'
+    | '/exercises/new'
     | '/sessions/$sessionId'
     | '/templates/$templateId'
     | '/templates/new'
+    | '/exercises/'
     | '/templates/'
   fileRoutesById: FileRoutesById
 }
@@ -115,9 +151,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
   MetronomeRoute: typeof MetronomeRoute
+  ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
+  ExercisesNewRoute: typeof ExercisesNewRoute
   SessionsSessionIdRoute: typeof SessionsSessionIdRoute
   TemplatesTemplateIdRoute: typeof TemplatesTemplateIdRoute
   TemplatesNewRoute: typeof TemplatesNewRoute
+  ExercisesIndexRoute: typeof ExercisesIndexRoute
   TemplatesIndexRoute: typeof TemplatesIndexRoute
 }
 
@@ -142,6 +181,27 @@ declare module '@tanstack/react-router' {
       path: '/metronome'
       fullPath: '/metronome'
       preLoaderRoute: typeof MetronomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exercises/': {
+      id: '/exercises/'
+      path: '/exercises'
+      fullPath: '/exercises/'
+      preLoaderRoute: typeof ExercisesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exercises/$exerciseId': {
+      id: '/exercises/$exerciseId'
+      path: '/exercises/$exerciseId'
+      fullPath: '/exercises/$exerciseId'
+      preLoaderRoute: typeof ExercisesExerciseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/exercises/new': {
+      id: '/exercises/new'
+      path: '/exercises/new'
+      fullPath: '/exercises/new'
+      preLoaderRoute: typeof ExercisesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sessions/$sessionId': {
@@ -179,9 +239,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
   MetronomeRoute: MetronomeRoute,
+  ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,
+  ExercisesNewRoute: ExercisesNewRoute,
   SessionsSessionIdRoute: SessionsSessionIdRoute,
   TemplatesTemplateIdRoute: TemplatesTemplateIdRoute,
   TemplatesNewRoute: TemplatesNewRoute,
+  ExercisesIndexRoute: ExercisesIndexRoute,
   TemplatesIndexRoute: TemplatesIndexRoute,
 }
 export const routeTree = rootRouteImport

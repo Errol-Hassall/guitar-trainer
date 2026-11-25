@@ -1,5 +1,10 @@
 import { db } from './db'
 import type {
+  Exercise,
+  ExerciseInput,
+  ExerciseProgress,
+  ExerciseSummary,
+  LogProgressInput,
   MetronomePreset,
   PracticeSession,
   PresetInput,
@@ -10,6 +15,7 @@ import type {
   Template,
   TemplateInput,
   Theme,
+  UpdateExerciseInput,
   UpdateTemplateInput,
 } from '#/lib/types'
 import { defaultAccents, resizeAccents } from '#/lib/metronome'
@@ -66,6 +72,68 @@ interface PresetRow {
   subdivision: MetronomePreset['subdivision']
   accents: string
   created_at: string
+}
+
+interface ExerciseRow {
+  id: number
+  name: string
+  has_timing: number
+  difficulty: number
+  tags: string
+  tab_text: string
+  created_at: string
+  updated_at: string
+}
+
+interface ProgressRow {
+  id: number
+  exercise_id: number
+  session_name: string | null
+  max_clean_bpm: number | null
+  avg_bpm: number | null
+  duration_seconds: number
+  clean_streak: number | null
+  self_rating: number | null
+  notes: string
+  completed_at: string
+}
+
+function parseTags(json: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(json)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((value): value is string => typeof value === 'string')
+  } catch {
+    return []
+  }
+}
+
+function mapExercise(row: ExerciseRow): Exercise {
+  return {
+    id: row.id,
+    name: row.name,
+    hasTiming: row.has_timing === 1,
+    difficulty: row.difficulty,
+    tags: parseTags(row.tags),
+    tabText: row.tab_text,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function mapProgress(row: ProgressRow): ExerciseProgress {
+  return {
+    id: row.id,
+    exerciseId: row.exercise_id,
+    sessionName: row.session_name,
+    maxCleanBpm: row.max_clean_bpm,
+    avgBpm: row.avg_bpm,
+    durationSeconds: row.duration_seconds,
+    cleanStreak: row.clean_streak,
+    selfRating: row.self_rating,
+    notes: row.notes,
+    completedAt: row.completed_at,
+  }
 }
 
 function nowIso(): string {
@@ -488,4 +556,129 @@ export function deletePreset(id: number): void {
   if (!row) throw new Error('Preset not found.')
   assertBuiltinGuard(row.is_builtin, 'preset')
   db.prepare('DELETE FROM presets WHERE id = ?').run(id)
+}
+
+function getExerciseRow(id: number): ExerciseRow {
+  const row = db.prepare('SELECT * FROM exercises WHERE id = ?').get(
+    id,
+  ) as ExerciseRow | undefined
+  if (!row) throw new Error('Exercise not found.')
+  return row
+}
+
+export function listExercises(): ExerciseSummary[] {
+  const rows = db
+    .prepare(
+      `SELECT e.*,
+              (SELECT COUNT(*) FROM exercise_progress p WHERE p.exercise_id = e.id) AS log_count,
+              (SELECT p.max_clean_bpm FROM exercise_progress p
+                WHERE p.exercise_id = e.id AND p.max_clean_bpm IS NOT NULL
+                ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_bpm,
+              (SELECT p.self_rating FROM exercise_progress p
+                WHERE p.exercise_id = e.id AND p.self_rating IS NOT NULL
+                ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_rating
+       FROM exercises e
+       ORDER BY name`,
+    )
+    .all() as unknown as (ExerciseRow & {
+    log_count: number
+    latest_bpm: number | null
+    latest_rating: number | null
+  })[]
+
+  return rows.map((row) => ({
+    ...mapExercise(row),
+    logCount: row.log_count,
+    latestBpm: row.latest_bpm,
+    latestRating: row.latest_rating,
+  }))
+}
+
+export function getExercise(id: number): Exercise | null {
+  const row = db.prepare('SELECT * FROM exercises WHERE id = ?').get(
+    id,
+  ) as ExerciseRow | undefined
+  if (!row) return null
+  return mapExercise(row)
+}
+
+export function createExercise(input: ExerciseInput): Exercise {
+  const now = nowIso()
+  const result = db
+    .prepare(
+      `INSERT INTO exercises (name, has_timing, difficulty, tags, tab_text, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(
+      input.name,
+      input.hasTiming ? 1 : 0,
+      input.difficulty,
+      JSON.stringify(input.tags),
+      input.tabText,
+      now,
+      now,
+    )
+  return getExercise(Number(result.lastInsertRowid)) as Exercise
+}
+
+export function updateExercise(input: UpdateExerciseInput): Exercise {
+  getExerciseRow(input.id)
+  db.prepare(
+    `UPDATE exercises SET name = ?, has_timing = ?, difficulty = ?, tags = ?, tab_text = ?, updated_at = ?
+     WHERE id = ?`,
+  ).run(
+    input.name,
+    input.hasTiming ? 1 : 0,
+    input.difficulty,
+    JSON.stringify(input.tags),
+    input.tabText,
+    nowIso(),
+    input.id,
+  )
+  return getExercise(input.id) as Exercise
+}
+
+export function deleteExercise(id: number): void {
+  getExerciseRow(id)
+  db.prepare('DELETE FROM exercises WHERE id = ?').run(id)
+}
+
+export function listProgress(exerciseId: number): ExerciseProgress[] {
+  const rows = db
+    .prepare(
+      `SELECT p.*, s.template_name AS session_name
+       FROM exercise_progress p
+       LEFT JOIN sessions s ON s.id = p.session_id
+       WHERE p.exercise_id = ?
+       ORDER BY p.completed_at DESC, p.id DESC`,
+    )
+    .all(exerciseId) as unknown as ProgressRow[]
+  return rows.map(mapProgress)
+}
+
+export function logProgress(input: LogProgressInput): void {
+  const exercise = getExerciseRow(input.exerciseId)
+  if (exercise.has_timing === 1 && input.maxCleanBpm === undefined) {
+    throw new Error('Max clean BPM is required for timed exercises.')
+  }
+  if (exercise.has_timing === 0 && input.selfRating === undefined) {
+    throw new Error('A self rating is required for untimed exercises.')
+  }
+
+  const timed = exercise.has_timing === 1
+  db.prepare(
+    `INSERT INTO exercise_progress
+      (exercise_id, session_id, max_clean_bpm, avg_bpm, duration_seconds, clean_streak, self_rating, notes, completed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    input.exerciseId,
+    findActiveSessionId(),
+    timed ? input.maxCleanBpm ?? null : null,
+    timed ? input.avgBpm ?? null : null,
+    input.durationSeconds ?? 0,
+    timed ? input.cleanStreak ?? null : null,
+    timed ? null : input.selfRating ?? null,
+    input.notes ?? '',
+    nowIso(),
+  )
 }

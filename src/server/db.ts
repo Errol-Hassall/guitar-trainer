@@ -76,6 +76,33 @@ const MIGRATIONS: string[] = [
     updated_at TEXT NOT NULL
   );
   `,
+  `
+  CREATE TABLE exercises (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    has_timing INTEGER NOT NULL DEFAULT 0 CHECK (has_timing IN (0, 1)),
+    difficulty INTEGER NOT NULL DEFAULT 3 CHECK (difficulty BETWEEN 1 AND 5),
+    tags TEXT NOT NULL DEFAULT '[]',
+    tab_text TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE exercise_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exercise_id INTEGER NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+    session_id INTEGER REFERENCES sessions(id) ON DELETE SET NULL,
+    max_clean_bpm INTEGER CHECK (max_clean_bpm BETWEEN 1 AND 999),
+    avg_bpm INTEGER CHECK (avg_bpm BETWEEN 1 AND 999),
+    duration_seconds INTEGER NOT NULL DEFAULT 0 CHECK (duration_seconds >= 0),
+    clean_streak INTEGER CHECK (clean_streak >= 0),
+    self_rating INTEGER CHECK (self_rating BETWEEN 1 AND 5),
+    notes TEXT NOT NULL DEFAULT '',
+    completed_at TEXT NOT NULL
+  );
+  CREATE INDEX idx_exercise_progress_exercise
+    ON exercise_progress(exercise_id, completed_at DESC);
+  `,
 ]
 
 export const databasePath = resolve(

@@ -3,10 +3,14 @@ import * as repo from './repo'
 import {
   autoAdvanceSchema,
   completeSectionSchema,
+  createExerciseSchema,
   createTemplateSchema,
+  deleteExerciseSchema,
   deletePresetSchema,
   deleteTemplateSchema,
+  exerciseIdSchema,
   listSessionsSchema,
+  logProgressSchema,
   oneThingSchema,
   restDaySchema,
   savePresetSchema,
@@ -14,6 +18,7 @@ import {
   sessionIdSchema,
   startSessionSchema,
   templateIdSchema,
+  updateExerciseSchema,
   updateTemplateSchema,
 } from './schemas'
 
@@ -104,5 +109,39 @@ export const setOneThing = createServerFn({ method: 'POST' })
   .validator(oneThingSchema)
   .handler(({ data }) => {
     repo.setOneThing(data.text)
+    return true
+  })
+
+export const listExercises = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listExercises(),
+)
+
+export const getExercise = createServerFn({ method: 'GET' })
+  .validator(exerciseIdSchema)
+  .handler(({ data }) => repo.getExercise(data.id))
+
+export const createExercise = createServerFn({ method: 'POST' })
+  .validator(createExerciseSchema)
+  .handler(({ data }) => repo.createExercise(data))
+
+export const updateExercise = createServerFn({ method: 'POST' })
+  .validator(updateExerciseSchema)
+  .handler(({ data }) => repo.updateExercise(data))
+
+export const deleteExercise = createServerFn({ method: 'POST' })
+  .validator(deleteExerciseSchema)
+  .handler(({ data }) => {
+    repo.deleteExercise(data.id)
+    return true
+  })
+
+export const listProgress = createServerFn({ method: 'GET' })
+  .validator(exerciseIdSchema)
+  .handler(({ data }) => repo.listProgress(data.id))
+
+export const logProgress = createServerFn({ method: 'POST' })
+  .validator(logProgressSchema)
+  .handler(({ data }) => {
+    repo.logProgress(data)
     return true
   })

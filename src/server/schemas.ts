@@ -88,3 +88,31 @@ export const listSessionsSchema = z.object({
 })
 
 export const sessionKindSchema = z.enum(SESSION_KINDS)
+
+export const exerciseInputSchema = z.object({
+  name: z.string().trim().min(1, 'Exercise name is required').max(60),
+  hasTiming: z.boolean(),
+  difficulty: z.number().int().min(1).max(5),
+  tags: z.array(z.string().trim().min(1).max(24)).max(8),
+  tabText: z.string().max(4000),
+})
+
+export const createExerciseSchema = exerciseInputSchema
+
+export const updateExerciseSchema = exerciseInputSchema.extend({
+  id: idSchema,
+})
+
+export const deleteExerciseSchema = z.object({ id: idSchema })
+
+export const exerciseIdSchema = z.object({ id: idSchema })
+
+export const logProgressSchema = z.object({
+  exerciseId: idSchema,
+  maxCleanBpm: z.number().int().min(1).max(999).nullable().optional(),
+  avgBpm: z.number().int().min(1).max(999).nullable().optional(),
+  durationSeconds: z.number().int().min(0).max(86_400).default(0),
+  cleanStreak: z.number().int().min(0).max(10_000).nullable().optional(),
+  selfRating: z.number().int().min(1).max(5).nullable().optional(),
+  notes: z.string().max(4000).default(''),
+})

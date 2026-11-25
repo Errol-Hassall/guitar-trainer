@@ -66,6 +66,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 { to: '/', label: 'Home' },
                 { to: '/metronome', label: 'Metronome' },
                 { to: '/templates', label: 'Templates' },
+                { to: '/exercises', label: 'Exercises' },
                 { to: '/history', label: 'History' },
               ].map((item) => (
                 <Link

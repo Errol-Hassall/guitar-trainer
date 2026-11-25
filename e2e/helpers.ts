@@ -24,3 +24,19 @@ export async function startTemplateSession(page: Page, name: string): Promise<vo
   await expect(page).toHaveURL(/\/sessions\/\d+/)
   await expect(page.locator('[data-session-status="active"]')).toBeVisible()
 }
+
+/** Create an exercise through the UI and land on its detail page. */
+export async function createExercise(
+  page: Page,
+  name: string,
+  type: 'timed' | 'untimed' = 'timed',
+): Promise<void> {
+  await page.goto('/exercises')
+  await page.getByRole('button', { name: 'New exercise' }).click()
+  await page.getByLabel('Exercise name').fill(name)
+  if (type === 'untimed') {
+    await page.getByLabel('Type').selectOption('untimed')
+  }
+  await page.getByRole('button', { name: 'Create exercise' }).click()
+  await expect(page).toHaveURL(/\/exercises\/\d+/)
+}

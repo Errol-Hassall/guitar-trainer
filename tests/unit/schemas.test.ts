@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   completeSectionSchema,
+  exerciseInputSchema,
   listSessionsSchema,
+  logProgressSchema,
   savePresetSchema,
   startSessionSchema,
   templateInputSchema,
@@ -100,6 +102,55 @@ describe('completeSectionSchema', () => {
     )
     expect(completeSectionSchema.safeParse({ sectionId: 1, elapsedSeconds: 300 }).success).toBe(
       true,
+    )
+  })
+})
+
+describe('exerciseInputSchema', () => {
+  const valid = {
+    name: 'Picking drill',
+    hasTiming: true,
+    difficulty: 3,
+    tags: ['Technique'],
+    tabText: '',
+  }
+
+  it('accepts a valid exercise and trims the name', () => {
+    const result = exerciseInputSchema.safeParse({ ...valid, name: '  Picking drill  ' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.name).toBe('Picking drill')
+  })
+
+  it('rejects empty names, out-of-range difficulty and too many tags', () => {
+    expect(exerciseInputSchema.safeParse({ ...valid, name: '   ' }).success).toBe(false)
+    expect(exerciseInputSchema.safeParse({ ...valid, difficulty: 0 }).success).toBe(false)
+    expect(exerciseInputSchema.safeParse({ ...valid, difficulty: 6 }).success).toBe(false)
+    const nineTags = Array.from({ length: 9 }, (_, index) => `tag${index}`)
+    expect(exerciseInputSchema.safeParse({ ...valid, tags: nineTags }).success).toBe(false)
+    expect(exerciseInputSchema.safeParse({ ...valid, tags: [''] }).success).toBe(false)
+  })
+})
+
+describe('logProgressSchema', () => {
+  it('defaults duration and notes', () => {
+    const parsed = logProgressSchema.parse({ exerciseId: 1, maxCleanBpm: 120 })
+    expect(parsed.durationSeconds).toBe(0)
+    expect(parsed.notes).toBe('')
+  })
+
+  it('bounds BPM values to the metronome range', () => {
+    expect(logProgressSchema.safeParse({ exerciseId: 1, maxCleanBpm: 0 }).success).toBe(false)
+    expect(logProgressSchema.safeParse({ exerciseId: 1, maxCleanBpm: 1000 }).success).toBe(
+      false,
+    )
+    expect(logProgressSchema.safeParse({ exerciseId: 1, maxCleanBpm: 999 }).success).toBe(true)
+  })
+
+  it('bounds self rating and duration', () => {
+    expect(logProgressSchema.safeParse({ exerciseId: 1, selfRating: 0 }).success).toBe(false)
+    expect(logProgressSchema.safeParse({ exerciseId: 1, selfRating: 6 }).success).toBe(false)
+    expect(logProgressSchema.safeParse({ exerciseId: 1, durationSeconds: -1 }).success).toBe(
+      false,
     )
   })
 })

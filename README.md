@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (MVP — Phases 1 & 2)
+## Features (Phases 1–3)
 
 **Metronome**
 
@@ -23,6 +23,13 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Per-section countdown with pause/skip, section notes (≤4000 chars), auto-advance with chime (toggleable)
 - One active session at a time; "one thing to fix this week" pinned into every session
 - History of all sessions with totals
+
+**Exercises & progress**
+
+- Your own exercises (no built-ins): name, timed vs untimed, difficulty 1–5, up to 8 tags, optional tabs/notation text
+- Timed exercises log max clean BPM, average BPM, duration and clean streak; a dependency-free SVG chart shows max clean BPM over time
+- Untimed exercises log a self rating (1–5), duration and notes
+- Progress logs attach to the active session when one is running, so history stays linked
 
 ## Quickstart
 
@@ -90,9 +97,11 @@ src/lib/                pure logic + canonical types (no I/O)
 ### Data model
 
 `templates` (1–n) `template_sections` · `sessions` (1–n) `session_sections` ·
-`presets` · `app_state` (single row: weekly focus note). Sessions snapshot the
-template's name and sections at start time, so editing a template never
-rewrites history. Built-ins are flagged `is_builtin` and guarded in the repo.
+`exercises` (1–n) `exercise_progress` · `presets` · `app_state` (single row:
+weekly focus note). Sessions snapshot the template's name and sections at start
+time, so editing a template never rewrites history. Progress rows optionally
+reference the active session (`ON DELETE SET NULL`) and cascade with their
+exercise. Built-ins are flagged `is_builtin` and guarded in the repo.
 
 ## Testing
 
@@ -100,10 +109,12 @@ rewrites history. Built-ins are flagged `is_builtin` and guarded in the repo.
 bun run test:all   # the gate: typecheck → lint → vitest (unit + integration) → Playwright e2e
 ```
 
-- **Unit** (`tests/unit/`): pure metronome/session logic and zod schemas.
+- **Unit** (`tests/unit/`): pure metronome/session logic, progress-graph points
+  and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
-  session lifecycle, clamping, rest days, presets and the focus note.
+  session lifecycle, clamping, rest days, presets, exercises + progress and the
+  focus note.
 - **E2E** (`e2e/`, Playwright): production build served on `127.0.0.1:3100`
   with a fresh throwaway DB; 1 worker, no retries, traces/screenshots/HTML
   report on failure. System Chromium is used when present, otherwise the
@@ -121,8 +132,9 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 ## Deliberately not built (post-MVP)
 
-Phases 3–8 of the original spec are out of scope for this MVP: speed trainer,
-focus mode, PWA/offline support (service worker, IndexedDB), automatic Sunday
-theme selection and everything else beyond the metronome + session timer. The
-server-function layer is deliberately kept as a thin validated boundary so a
-future auth layer can slot in without restructuring.
+Phases 4–8 of the original spec are out of scope: speed trainer, focus mode,
+audio attachment / reference takes (Phase 5), PWA/offline support (service
+worker, IndexedDB), automatic Sunday theme selection and everything else beyond
+the metronome, sessions and exercises. The server-function layer is deliberately
+kept as a thin validated boundary so a future auth layer can slot in without
+restructuring.

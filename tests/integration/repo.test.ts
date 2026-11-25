@@ -19,6 +19,8 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
+  db.exec('DELETE FROM exercise_progress')
+  db.exec('DELETE FROM exercises')
   db.exec('DELETE FROM session_sections')
   db.exec('DELETE FROM sessions')
   db.exec('DELETE FROM template_sections')
@@ -302,5 +304,96 @@ describe('one thing', () => {
     expect(repo.getOneThing()).toBe('Keep time on the last bar.')
     repo.setOneThing('')
     expect(repo.getOneThing()).toBe('')
+  })
+})
+
+describe('exercises', () => {
+  const timedInput = {
+    name: 'Picking drill',
+    hasTiming: true,
+    difficulty: 3,
+    tags: ['Technique', 'Key of E'],
+    tabText: 'e|---0-2-4-',
+  }
+
+  it('creates, lists and updates exercises with tags round-trip', () => {
+    const created = repo.createExercise(timedInput)
+    expect(created.hasTiming).toBe(true)
+    expect(created.tags).toEqual(['Technique', 'Key of E'])
+
+    const listed = repo.listExercises()
+    expect(listed.find((exercise) => exercise.id === created.id)?.name).toBe('Picking drill')
+
+    const updated = repo.updateExercise({ ...timedInput, id: created.id, name: 'Renamed' })
+    expect(updated.name).toBe('Renamed')
+    expect(repo.getExercise(created.id)?.tabText).toBe('e|---0-2-4-')
+  })
+
+  it('lists exercises with latest BPM and rating summaries', () => {
+    const timed = repo.createExercise(timedInput)
+    const untimed = repo.createExercise({ ...timedInput, name: 'Chord shape', hasTiming: false })
+
+    repo.logProgress({ exerciseId: timed.id, maxCleanBpm: 100, durationSeconds: 60 })
+    repo.logProgress({ exerciseId: timed.id, maxCleanBpm: 120, durationSeconds: 60 })
+    repo.logProgress({ exerciseId: untimed.id, selfRating: 4, durationSeconds: 30 })
+
+    const listed = repo.listExercises()
+    expect(listed.find((exercise) => exercise.id === timed.id)?.latestBpm).toBe(120)
+    expect(listed.find((exercise) => exercise.id === untimed.id)?.latestRating).toBe(4)
+    expect(listed.find((exercise) => exercise.id === untimed.id)?.logCount).toBe(1)
+  })
+
+  it('logs timed progress and requires a max clean BPM', () => {
+    const id = repo.createExercise(timedInput).id
+    expect(() => repo.logProgress({ exerciseId: id })).toThrow(/Max clean BPM/)
+
+    repo.logProgress({
+      exerciseId: id,
+      maxCleanBpm: 120,
+      avgBpm: 95,
+      durationSeconds: 300,
+      cleanStreak: 4,
+    })
+    const [row] = repo.listProgress(id)
+    expect(row.maxCleanBpm).toBe(120)
+    expect(row.avgBpm).toBe(95)
+    expect(row.durationSeconds).toBe(300)
+    expect(row.cleanStreak).toBe(4)
+    expect(row.selfRating).toBeNull()
+  })
+
+  it('logs untimed progress and requires a self rating', () => {
+    const id = repo.createExercise({ ...timedInput, hasTiming: false }).id
+    expect(() => repo.logProgress({ exerciseId: id })).toThrow(/self rating/i)
+
+    repo.logProgress({ exerciseId: id, selfRating: 5, notes: 'Much better.' })
+    const [row] = repo.listProgress(id)
+    expect(row.selfRating).toBe(5)
+    expect(row.notes).toBe('Much better.')
+    expect(row.maxCleanBpm).toBeNull()
+  })
+
+  it('attaches progress to the active session when one exists', () => {
+    const id = repo.createExercise(timedInput).id
+    repo.logProgress({ exerciseId: id, maxCleanBpm: 90 })
+    expect(repo.listProgress(id)[0].sessionName).toBeNull()
+
+    repo.startSession({ templateId: dailyTemplateId(), kind: 'full', theme: 'Picking & Pulse' })
+    repo.logProgress({ exerciseId: id, maxCleanBpm: 100 })
+    expect(repo.listProgress(id)[0].sessionName).toBe('Daily 60')
+  })
+
+  it('rejects logs for unknown exercises', () => {
+    expect(() => repo.logProgress({ exerciseId: 99_999, maxCleanBpm: 100 })).toThrow(
+      /not found/i,
+    )
+  })
+
+  it('deletes exercises and cascades their progress', () => {
+    const id = repo.createExercise(timedInput).id
+    repo.logProgress({ exerciseId: id, maxCleanBpm: 100 })
+    repo.deleteExercise(id)
+    expect(repo.getExercise(id)).toBeNull()
+    expect(repo.listProgress(id)).toEqual([])
   })
 })

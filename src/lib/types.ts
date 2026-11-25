@@ -159,3 +159,55 @@ export interface PresetInput {
   subdivision: Subdivision
   accents: AccentLevel[]
 }
+
+export interface Exercise {
+  id: number
+  name: string
+  hasTiming: boolean
+  difficulty: number
+  tags: string[]
+  tabText: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ExerciseInput {
+  name: string
+  hasTiming: boolean
+  difficulty: number
+  tags: string[]
+  tabText: string
+}
+
+export interface UpdateExerciseInput extends ExerciseInput {
+  id: number
+}
+
+export interface ExerciseSummary extends Exercise {
+  logCount: number
+  latestBpm: number | null
+  latestRating: number | null
+}
+
+export interface ExerciseProgress {
+  id: number
+  exerciseId: number
+  sessionName: string | null
+  maxCleanBpm: number | null
+  avgBpm: number | null
+  durationSeconds: number
+  cleanStreak: number | null
+  selfRating: number | null
+  notes: string
+  completedAt: string
+}
+
+export interface LogProgressInput {
+  exerciseId: number
+  maxCleanBpm?: number | null
+  avgBpm?: number | null
+  durationSeconds?: number
+  cleanStreak?: number | null
+  selfRating?: number | null
+  notes?: string
+}
