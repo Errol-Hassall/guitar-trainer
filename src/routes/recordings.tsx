@@ -12,6 +12,7 @@ import {
   listRecordings,
   setReference,
 } from '#/server/api'
+import { describeMicError } from '#/components/audio/mic'
 import { RecordingPlayer } from '#/components/recording-player'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
@@ -94,8 +95,8 @@ function RecordingsPage() {
         elapsedRef.current += 0.5
         setElapsed(Math.floor(elapsedRef.current))
       }, 500)
-    } catch {
-      setError('Microphone unavailable. Check browser permissions and try again.')
+    } catch (cause) {
+      setError(describeMicError(cause))
     }
   }
 

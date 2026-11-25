@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { MicOff, Square } from 'lucide-react'
 import { detectPitch, frequencyToNote, NOTE_NAMES, PITCH_MAX_HZ, PITCH_MIN_HZ } from '#/lib/audio'
+import { describeMicError } from '#/components/audio/mic'
 import { getAudioContext } from '#/components/metronome/audio'
 import { Button } from '#/components/ui/button'
 import { Card } from '#/components/ui/card'
@@ -50,7 +51,6 @@ function TunerPage() {
 
   useEffect(() => {
     return () => stopListening()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only
   }, [])
 
   function stopListening() {
@@ -105,9 +105,9 @@ function TunerPage() {
         })
       }
       rafRef.current = requestAnimationFrame(loop)
-    } catch {
+    } catch (cause) {
       stopListening()
-      setError('Microphone unavailable. Check browser permissions and try again.')
+      setError(describeMicError(cause))
       setState('error')
     }
   }
