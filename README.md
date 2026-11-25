@@ -4,7 +4,7 @@ A single-user, self-hosted web app for daily guitar practice: a precise metronom
 with accents and subdivisions, plus guided practice sessions with per-section
 timers, notes and history. All data stays on your machine in one SQLite file.
 
-## Features (Phases 1–7)
+## Features (Phases 1–8)
 
 **Metronome**
 
@@ -60,6 +60,14 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Monthly progress check page with built-in milestone lists for months 1–2 / 3–4 / 5–6 / 7–12 (a reference, not ticked state)
 - Data page: Markdown export, full JSON backup (versioned), session CSV for spreadsheets; restore from a JSON backup replaces all data transactionally and re-seeds built-ins; Markdown import reads the Templates and Exercises sections of an export — exercise packs import idempotently (existing names are skipped)
 - Installable PWA: web manifest, SVG icon and a service worker that caches the app shell (network-first). The server must be running for data changes — there is no offline data mode.
+
+**Hands-free & spaced repetition**
+
+- Foot-pedal keys on the active session page — `Space` start/pause, `N` next section, `T` tap tempo; works with any USB/Bluetooth pedal that emulates a keyboard (bind it to those keys)
+- Opt-in voice commands while a session runs: “next”, “repeat” (restart the section clock) and “slower” (metronome −10 BPM) via the browser’s speech recognition — Chromium-based browsers only, mic access is never requested until you switch it on
+- XL touch targets for start/pause, next section and tap tempo, reachable with a foot or elbow
+- **Due for review** on home: exercises practiced at least once but untouched for 7+ days, most stale first (never-practiced exercises are not “due” — there is nothing to review yet)
+- **Suggested focus** card: a rule-based session suggestion from your practice data (due reviews, streak, activity this week) — deterministic and local, no model call
 
 ## Quickstart
 
@@ -138,6 +146,8 @@ exercises) and guarded in the repo. Learning paths live in
 prerequisite step (`requires_step_id`) and an in-app drill; completion state is
 one row per done step in `path_step_state`. Ear-training scores live in
 `ear_stats`, one cumulative row per drill and level (`attempts` / `correct`).
+Spaced repetition needs no table of its own: the “last practiced” date is a
+derived column (latest `exercise_progress.completed_at`) on the exercise list.
 Recordings, backing tracks, learning-path progress and ear scores live in
 `recordings` / `tracks` / `path_step_state` / `ear_stats`; all four are
 deliberately excluded from the v1 JSON backup, so restoring an old backup
@@ -151,7 +161,8 @@ bun run test:all   # the gate: typecheck → lint → vitest (unit + integration
 
 - **Unit** (`tests/unit/`): pure metronome/session logic, progress-graph points,
   WSOLA time-stretch / YIN pitch detection, ear-drill question generation
-  (seeded RNG, diatonic correctness, difficulty tiers) and zod schemas.
+  (seeded RNG, diatonic correctness, difficulty tiers), review-due dates and
+  focus suggestions, and zod schemas.
 - **Integration** (`tests/integration/`): the real repo against a real SQLite
   file in a temp dir (env set before import), covering seeding, templates,
   session lifecycle, clamping, rest days, presets, exercises + progress,
@@ -178,7 +189,11 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
 metronome, sessions, exercises, learning content, ear training, audio tools and
-workflow. Also skipped in Phase 7: adaptive difficulty (FET-style option sets
+workflow. Also skipped in Phase 8: WebHID binding for specific foot-pedal
+devices (the key bindings work with any keyboard-emulating pedal instead),
+voice control on non-Chromium browsers, LLM-based guidance (rule-based local
+heuristics instead — no API key, no network), per-exercise review intervals
+(one fixed 7-day interval) and any history of past suggestions. Also skipped in Phase 7: adaptive difficulty (FET-style option sets
 that expand as accuracy improves — fixed option sets per drill/level instead),
 scale degrees beyond the major scale (natural minor / pentatonic come later),
 intervals beyond the ten standard ones, auto-grading of transcription takes

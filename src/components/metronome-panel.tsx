@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pause, Play, Trash2, Volume2 } from 'lucide-react'
 import type {
   AccentLevel,
@@ -20,6 +20,7 @@ import {
   SUBDIVISION_LABELS,
   SUBDIVISIONS,
 } from '#/lib/types'
+import { onHandsFree } from '#/lib/hands-free'
 import {
   calculateTapTempo,
   clampBpm,
@@ -37,6 +38,9 @@ import { BeatDisplay } from './metronome/beat-display'
 import { useMetronome } from './metronome/use-metronome'
 
 type PresetStatus = 'idle' | 'saving' | 'saved' | 'error'
+
+/** BPM step for the "slower" voice command. */
+const SLOWER_STEP_BPM = 10
 
 export function MetronomePanel({
   presets,
@@ -114,6 +118,21 @@ export function MetronomePanel({
     const value = calculateTapTempo(taps)
     if (value !== null) setBpm(value)
   }
+
+  // Hands-free actions (foot-pedal keys / voice); no-op on pages without a dispatcher.
+  const tapRef = useRef(handleTap)
+  tapRef.current = handleTap
+
+  useEffect(() => {
+    const offTap = onHandsFree('tap-tempo', () => tapRef.current())
+    const offSlower = onHandsFree('slower', () =>
+      setBpm((previous) => clampBpm(previous - SLOWER_STEP_BPM)),
+    )
+    return () => {
+      offTap()
+      offSlower()
+    }
+  }, [])
 
   function handleBeatsChange(raw: number) {
     const next = Math.min(16, Math.max(1, Math.round(Number.isFinite(raw) ? raw : 4)))
@@ -311,7 +330,7 @@ export function MetronomePanel({
                 </>
               )}
             </Button>
-            <Button variant="secondary" size="lg" onClick={handleTap}>
+            <Button variant="secondary" size="xl" onClick={handleTap} data-metronome-tap="true">
               Tap tempo
               {tapsRef.current.length > 0 ? (
                 <Badge variant="teal">{tapsRef.current.length}</Badge>

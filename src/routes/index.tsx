@@ -9,12 +9,15 @@ import {
   sessionKindLabel,
   themeForWeekday,
 } from '#/lib/sessions'
+import { suggestFocus } from '#/lib/focus'
+import { REVIEW_INTERVAL_DAYS, daysSince, dueForReview } from '#/lib/review'
 import { computeStreak, weekStartUtc } from '#/lib/streaks'
 import {
   completeSession,
   getActiveSession,
   getOneThing,
   getWeeklyReview,
+  listExercises,
   listPracticedDates,
   listRecentReviews,
   listSessions,
@@ -34,7 +37,7 @@ import { WeeklyReviewCard } from '#/components/weekly-review'
 export const Route = createFileRoute('/')({
   component: Home,
   loader: async () => {
-    const [templates, active, recent, oneThing, sessionDates, practicedDates] =
+    const [templates, active, recent, oneThing, sessionDates, practicedDates, exercises] =
       await Promise.all([
         listTemplates(),
         getActiveSession(),
@@ -42,9 +45,11 @@ export const Route = createFileRoute('/')({
         getOneThing(),
         listSessionDates(),
         listPracticedDates(),
+        listExercises(),
       ])
 
-    const todayKey = new Date().toISOString().slice(0, 10)
+    const now = new Date()
+    const todayKey = now.toISOString().slice(0, 10)
     const weekStart = weekStartUtc(todayKey)
     const [currentReview, recentReviews] = await Promise.all([
       getWeeklyReview({ data: { weekStart } }),
@@ -53,21 +58,34 @@ export const Route = createFileRoute('/')({
 
     const [year, month, day] = weekStart.split('-').map(Number)
     const practicedSet = new Set(practicedDates)
-    const practicedEveryday = Array.from({ length: 7 }, (_, offset) =>
+    const practicedDaysThisWeek = Array.from({ length: 7 }, (_, offset) =>
       new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10),
-    ).every((weekDay) => practicedSet.has(weekDay))
+    ).filter((weekDay) => practicedSet.has(weekDay)).length
+
+    const streakCount = computeStreak(new Set(sessionDates), todayKey)
+    const due = dueForReview(exercises, now)
+      .map((exercise) => ({ exercise, daysSince: daysSince(exercise.lastPracticedAt!, now) }))
+      .sort((a, b) => b.daysSince - a.daysSince)
 
     return {
       templates,
       active,
       recent,
       oneThing,
-      todayTheme: themeForWeekday(new Date()),
-      streakCount: computeStreak(new Set(sessionDates), todayKey),
+      todayTheme: themeForWeekday(now),
+      streakCount,
       weekStart,
       currentReview,
-      practicedEveryday,
+      practicedEveryday: practicedDaysThisWeek === 7,
       recentReviews,
+      due,
+      suggestion: suggestFocus({
+        dueCount: due.length,
+        topDueNames: due.slice(0, 3).map((item) => item.exercise.name),
+        streakCount,
+        practicedDaysThisWeek,
+        theme: themeForWeekday(now),
+      }),
     }
   },
 })
@@ -218,6 +236,39 @@ function Home() {
       )}
 
       <OneThingCard initial={data.oneThing} />
+
+      <Card title="Suggested focus" description="Rule-based suggestion from your practice data — not a model.">
+        <p className="text-sm">{data.suggestion}</p>
+      </Card>
+
+      <Card
+        title="Due for review"
+        description={`Practiced before, then untouched for ${REVIEW_INTERVAL_DAYS}+ days.`}
+      >
+        {data.due.length === 0 ? (
+          <p className="text-sm text-muted">
+            Nothing due yet — exercises appear here once they’ve been practiced and then go stale.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2" data-review-count={data.due.length}>
+            {data.due.map(({ exercise, daysSince: days }) => (
+              <li
+                key={exercise.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-line bg-raised px-3 py-2 text-sm"
+              >
+                <Link
+                  to="/exercises/$exerciseId"
+                  params={{ exerciseId: String(exercise.id) }}
+                  className="font-medium hover:text-accent"
+                >
+                  {exercise.name}
+                </Link>
+                <span className="text-muted">{days} days since practice</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <WeeklyReviewCard
         weekStart={data.weekStart}

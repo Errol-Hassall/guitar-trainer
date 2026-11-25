@@ -618,7 +618,9 @@ export function listExercises(): ExerciseSummary[] {
                 ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_bpm,
               (SELECT p.self_rating FROM exercise_progress p
                 WHERE p.exercise_id = e.id AND p.self_rating IS NOT NULL
-                ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_rating
+                ORDER BY p.completed_at DESC, p.id DESC LIMIT 1) AS latest_rating,
+              (SELECT MAX(p.completed_at) FROM exercise_progress p
+                WHERE p.exercise_id = e.id) AS last_practiced_at
        FROM exercises e
        ORDER BY is_builtin DESC, name`,
     )
@@ -626,6 +628,7 @@ export function listExercises(): ExerciseSummary[] {
     log_count: number
     latest_bpm: number | null
     latest_rating: number | null
+    last_practiced_at: string | null
   })[]
 
   return rows.map((row) => ({
@@ -633,6 +636,7 @@ export function listExercises(): ExerciseSummary[] {
     logCount: row.log_count,
     latestBpm: row.latest_bpm,
     latestRating: row.latest_rating,
+    lastPracticedAt: row.last_practiced_at,
   }))
 }
 

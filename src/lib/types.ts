@@ -230,6 +230,8 @@ export interface ExerciseSummary extends Exercise {
   logCount: number
   latestBpm: number | null
   latestRating: number | null
+  /** ISO timestamp of the most recent progress log, or null when never practiced. */
+  lastPracticedAt: string | null
 }
 
 export interface ExerciseProgress {

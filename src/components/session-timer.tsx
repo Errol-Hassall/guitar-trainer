@@ -8,6 +8,7 @@ import {
   SkipForward,
 } from 'lucide-react'
 import type { PracticeSession } from '#/lib/types'
+import { onHandsFree } from '#/lib/hands-free'
 import {
   firstIncompleteIndex,
   formatClock,
@@ -155,6 +156,50 @@ export function SessionTimer({
 
   const completeRef = useRef(handleCompleteSection)
   completeRef.current = handleCompleteSection
+
+  function goToNextSection() {
+    const next = firstIncompleteIndex(sectionsRef.current)
+    if (next !== -1) goToSection(next, false)
+  }
+
+  // Hands-free actions (foot-pedal keys / voice) resolve against fresh state.
+  const handsFreeRef = useRef({
+    startStop: () => {},
+    nextSection: () => {},
+    repeatSection: () => {},
+  })
+  handsFreeRef.current = {
+    startStop() {
+      if (showSummary || busy) return
+      if (awaitingNext && !running) goToNextSection()
+      else if (running) pauseTimer()
+      else startTimer()
+    },
+    nextSection() {
+      if (showSummary || busy) return
+      if (awaitingNext && !running) goToNextSection()
+      else void completeRef.current()
+    },
+    repeatSection() {
+      if (showSummary || busy) return
+      const section = sections[currentIndex]
+      if (!section || section.completedAt !== null) return
+      remainingRef.current = section.plannedSeconds
+      setRemaining(section.plannedSeconds)
+      startTimer()
+    },
+  }
+
+  useEffect(() => {
+    const offStartStop = onHandsFree('start-stop', () => handsFreeRef.current.startStop())
+    const offNextSection = onHandsFree('next-section', () => handsFreeRef.current.nextSection())
+    const offRepeat = onHandsFree('repeat-section', () => handsFreeRef.current.repeatSection())
+    return () => {
+      offStartStop()
+      offNextSection()
+      offRepeat()
+    }
+  }, [])
 
   useEffect(() => {
     if (!running) return
@@ -319,13 +364,7 @@ export function SessionTimer({
           {awaitingNext && !running ? (
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-teal/40 bg-teal/10 px-3 py-2">
               <span className="text-sm text-teal">Section complete.</span>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  const next = firstIncompleteIndex(sectionsRef.current)
-                  if (next !== -1) goToSection(next, false)
-                }}
-              >
+              <Button variant="secondary" size="xl" onClick={goToNextSection}>
                 Next section
               </Button>
             </div>
@@ -333,17 +372,17 @@ export function SessionTimer({
 
           <div className="flex flex-wrap gap-3">
             {running ? (
-              <Button size="lg" onClick={pauseTimer}>
+              <Button size="xl" onClick={pauseTimer}>
                 <Pause className="size-5" aria-hidden="true" /> Pause
               </Button>
             ) : (
-              <Button size="lg" onClick={startTimer} disabled={awaitingNext || busy}>
+              <Button size="xl" onClick={startTimer} disabled={awaitingNext || busy}>
                 <Play className="size-5" aria-hidden="true" /> Start
               </Button>
             )}
             <Button
               variant="secondary"
-              size="lg"
+              size="xl"
               onClick={() => void handleCompleteSection()}
               disabled={busy}
             >

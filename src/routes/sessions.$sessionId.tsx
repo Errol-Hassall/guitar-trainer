@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { createFileRoute, notFound, useRouter } from '@tanstack/react-router'
 import type { MetronomePreset, Mood, PracticeSession } from '#/lib/types'
 import { MOODS } from '#/lib/types'
+import { useHandsFree } from '#/hooks/use-hands-free'
 import { formatUtcDateTime, sessionKindLabel } from '#/lib/sessions'
 import {
   deletePreset,
@@ -37,6 +38,7 @@ function SessionPage() {
     oneThing: string
     presets: MetronomePreset[]
   }
+  const handsFree = useHandsFree(data.session.status === 'active')
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8">
@@ -57,13 +59,54 @@ function SessionPage() {
         </div>
       ) : null}
       {data.session.status === 'active' ? (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-col gap-4">
+          <Card title="Hands-free control" description="Foot-pedal keys and voice commands for this session.">
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted">
+                Foot pedal (any keyboard-emulating USB/Bluetooth pedal): <Kbd>Space</Kbd>{' '}
+                start/pause · <Kbd>N</Kbd> next section · <Kbd>T</Kbd> tap tempo
+              </p>
+              <div
+                className="flex flex-wrap items-center gap-3"
+                data-voice-state={handsFree.voiceEnabled ? 'on' : 'off'}
+              >
+                <Button
+                  variant={handsFree.voiceEnabled ? 'danger' : 'secondary'}
+                  onClick={handsFree.toggleVoice}
+                  disabled={!handsFree.voiceSupported}
+                >
+                  {handsFree.voiceEnabled ? 'Stop voice control' : 'Enable voice control'}
+                </Button>
+                {handsFree.lastCommand !== '' ? (
+                  <Badge variant="teal">Heard “{handsFree.lastCommand}”</Badge>
+                ) : null}
+              </div>
+              {!handsFree.voiceSupported ? (
+                <p className="text-sm text-muted">
+                  Voice control needs a Chromium-based browser (Chrome or Edge).
+                </p>
+              ) : null}
+              {handsFree.voiceError !== '' ? (
+                <p role="alert" className="text-sm text-danger">
+                  {handsFree.voiceError}
+                </p>
+              ) : null}
+            </div>
+          </Card>
           <Card title="Metronome" description="Keep the click running while you work.">
             <SessionMetronome presets={data.presets} />
           </Card>
         </div>
       ) : null}
     </main>
+  )
+}
+
+function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded border border-line bg-raised px-1.5 py-0.5 font-mono text-xs">
+      {children}
+    </kbd>
   )
 }
 

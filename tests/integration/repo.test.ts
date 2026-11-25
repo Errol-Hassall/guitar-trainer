@@ -350,6 +350,24 @@ describe('exercises', () => {
     expect(listed.find((exercise) => exercise.id === untimed.id)?.logCount).toBe(1)
   })
 
+  it('lists last-practiced dates for spaced repetition', () => {
+    const practiced = repo.createExercise(timedInput)
+    const untouched = repo.createExercise({ ...timedInput, name: 'Never played' })
+
+    expect(repo.listExercises().find((exercise) => exercise.id === untouched.id)?.lastPracticedAt).toBeNull()
+
+    repo.logProgress({ exerciseId: practiced.id, maxCleanBpm: 100, durationSeconds: 60 })
+    const first = repo.listExercises().find((exercise) => exercise.id === practiced.id)!
+    expect(first.lastPracticedAt).toBeTruthy()
+
+    // The most recent log wins.
+    repo.logProgress({ exerciseId: practiced.id, maxCleanBpm: 110, durationSeconds: 60 })
+    const second = repo.listExercises().find((exercise) => exercise.id === practiced.id)!
+    expect(Date.parse(second.lastPracticedAt!)).toBeGreaterThanOrEqual(
+      Date.parse(first.lastPracticedAt!),
+    )
+  })
+
   it('logs timed progress and requires a max clean BPM', () => {
     const id = repo.createExercise(timedInput).id
     expect(() => repo.logProgress({ exerciseId: id })).toThrow(/Max clean BPM/)
