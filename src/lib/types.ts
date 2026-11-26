@@ -14,6 +14,7 @@ export const SUBDIVISIONS = [
   'sixteenth',
   'triplet',
   'swing',
+  'gallop',
 ] as const
 export type Subdivision = (typeof SUBDIVISIONS)[number]
 
@@ -22,7 +23,8 @@ export const SUBDIVISION_LABELS: Record<Subdivision, string> = {
   eighth: '8th notes',
   sixteenth: '16th notes',
   triplet: 'Triplets',
-  swing: 'Swing 8ths',
+  swing: 'Shuffle (long–short)',
+  gallop: 'Gallop (short–long)',
 }
 
 export const CLICK_SOUNDS = ['woodblock', 'beep', 'cowbell', 'click'] as const
@@ -35,19 +37,21 @@ export const CLICK_SOUND_LABELS: Record<ClickSound, string> = {
   click: 'Click',
 }
 
-export const ACCENT_LEVELS = [0, 1, 2] as const
+export const ACCENT_LEVELS = [0, 1, 2, 3] as const
 export type AccentLevel = (typeof ACCENT_LEVELS)[number]
 
 export const ACCENT_LABELS: Record<AccentLevel, string> = {
   0: 'Normal',
   1: 'Accent',
   2: 'Dominant',
+  3: 'Rest',
 }
 
 export const ACCENT_SHORT: Record<AccentLevel, string> = {
   0: '·',
   1: 'A',
   2: 'D',
+  3: 'R',
 }
 
 export const THEMES = [

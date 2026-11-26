@@ -10,8 +10,9 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 
 - 1–999 BPM (practical slider range 40–250), fine ±1 stepping
 - Any time signature up to 16 beats, beat unit /2 /4 /8 /16
-- Per-beat accents: normal / accent / dominant (tap to cycle; colorblind-safe `·`/`A`/`D` letters plus colour)
-- Subdivisions: none, 8ths, 16ths, triplets, swing 8ths — with a live clicks/min readout
+- Per-beat accents: normal / accent / dominant / rest (tap to cycle; colorblind-safe `·`/`A`/`D`/`R` letters plus colour); rests count but don't play
+- Subdivisions: none, 8ths, 16ths, triplets, shuffle (long–short), gallop (short–long) — with a live clicks/min readout
+- One-tap rhythm patterns (waltz 3/4, shuffle, gallop) and stop-after-N-bars auto-stop (count-in bars don't count)
 - Four click sounds, per-level volumes, count-in (0–2 bars), gap click (mute every other bar), optional haptics
 - Tap tempo, and saved presets (built-ins are read-only)
 - Global and persistent: the click keeps running while you navigate anywhere in the app, and the nav bar shows a live "N BPM" indicator that links back to it
@@ -227,7 +228,8 @@ so voicings follow the standard fingering shown). In the keys page: sevenths per
 (triads only) and harmonic/melodic minor (natural minor only). On the circle: flat-side
 enharmonic labels (Db/Ab/Eb — sharp spellings are used to match the rest of the app) and
 a drag-to-pan or zoomable view. In the modes page: full colour themes per mode (swatch dots
-only) and genre-specific drill content.
+only) and genre-specific drill content. In the metronome extras: hoksai's "N rounds × Y bars"
+split (a single stop-after bar count instead) and user-editable pattern ratios.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

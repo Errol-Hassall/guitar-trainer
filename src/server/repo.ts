@@ -248,7 +248,10 @@ function parseAccents(json: string, beats: number): MetronomePreset['accents'] {
     const parsed: unknown = JSON.parse(json)
     if (!Array.isArray(parsed)) return defaultAccents(beats)
     return resizeAccents(
-      parsed.filter((value): value is 0 | 1 | 2 => value === 0 || value === 1 || value === 2),
+      parsed.filter(
+        (value): value is 0 | 1 | 2 | 3 =>
+          value === 0 || value === 1 || value === 2 || value === 3,
+      ),
       beats,
     )
   } catch {

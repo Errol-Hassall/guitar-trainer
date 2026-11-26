@@ -10,6 +10,8 @@ export interface MetronomeSettings {
   subdivision: Subdivision
   accents: AccentLevel[]
   countInBars: number
+  /** Playing bars before the metronome stops itself; 0 = keep playing. */
+  stopAfterBars: number
   gapClick: boolean
   sound: ClickSound
   haptics: boolean
@@ -63,6 +65,35 @@ export function useMetronome(settings: MetronomeSettings) {
     beatProgress: 0,
   })
 
+  const stop = useCallback(() => {
+    if (schedulerRef.current !== null) {
+      clearInterval(schedulerRef.current)
+      schedulerRef.current = null
+    }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+    const context = getAudioContext()
+    const master = masterRef.current
+    if (master) {
+      master.gain.cancelScheduledValues(context.currentTime)
+      master.gain.setValueAtTime(master.gain.value, context.currentTime)
+      master.gain.linearRampToValueAtTime(0, context.currentTime + 0.05)
+      window.setTimeout(() => master.disconnect(), 120)
+    }
+    masterRef.current = null
+    eventsRef.current = []
+    visualRef.current = {
+      state: 'stopped',
+      beat: 0,
+      countInRemaining: 0,
+      barProgress: 0,
+      beatProgress: 0,
+    }
+    setIsPlaying(false)
+  }, [])
+
   const scheduleTick = useCallback((time: number) => {
     const context = getAudioContext()
     const master = masterRef.current
@@ -103,30 +134,34 @@ export function useMetronome(settings: MetronomeSettings) {
     const beatIndex = Math.floor(tickIndex / ticksPerBeat)
     const subIndex = tickIndex % ticksPerBeat
     const muted = s.gapClick && barIndexRef.current % 2 === 1
+    // Rest beats (level 3) count but don't play.
+    const resting = (s.accents[beatIndex] ?? 0) === 3
 
     if (subIndex === 0) {
       const level = s.accents[beatIndex] ?? 0
-      scheduleClick(
-        context,
-        master,
-        time,
-        level === 2 ? 'dominant' : level === 1 ? 'accent' : 'normal',
-        s.sound,
-        muted
-          ? 0
-          : level === 2
-            ? s.volumes.dominant
-            : level === 1
-              ? s.volumes.accent
-              : s.volumes.normal,
-      )
+      if (!resting) {
+        scheduleClick(
+          context,
+          master,
+          time,
+          level === 2 ? 'dominant' : level === 1 ? 'accent' : 'normal',
+          s.sound,
+          muted
+            ? 0
+            : level === 2
+              ? s.volumes.dominant
+              : level === 1
+                ? s.volumes.accent
+                : s.volumes.normal,
+        )
+      }
       eventsRef.current.push({
         time,
         beat: beatIndex,
         barStart: time - beatIndex * beatDuration,
         barDuration: s.beats * beatDuration,
       })
-    } else {
+    } else if (!resting) {
       scheduleClick(
         context,
         master,
@@ -141,18 +176,28 @@ export function useMetronome(settings: MetronomeSettings) {
     if (tickIndexRef.current >= totalTicks) {
       tickIndexRef.current = 0
       barIndexRef.current += 1
+      // Count-in bars don't count toward the stop-after limit.
+      if (s.stopAfterBars > 0 && barIndexRef.current >= s.stopAfterBars) {
+        stop()
+      }
     }
 
     const nextInterval =
       s.subdivision === 'swing' && subIndex === 0
         ? (2 / 3) * beatDuration
-        : beatDuration / ticksPerBeat
+        : s.subdivision === 'gallop' && subIndex === 0
+          ? (1 / 3) * beatDuration
+          : beatDuration / ticksPerBeat
     nextTickTimeRef.current += nextInterval
-  }, [])
+  }, [stop])
 
   const schedulerLoop = useCallback(() => {
     const context = getAudioContext()
-    while (nextTickTimeRef.current < context.currentTime + LOOKAHEAD_SECONDS) {
+    // stop() clears the interval; bail out if it fires mid-schedule.
+    while (
+      schedulerRef.current !== null &&
+      nextTickTimeRef.current < context.currentTime + LOOKAHEAD_SECONDS
+    ) {
       scheduleTick(nextTickTimeRef.current)
     }
   }, [scheduleTick])
@@ -167,8 +212,10 @@ export function useMetronome(settings: MetronomeSettings) {
     if (!latest) return
 
     const s = settingsRef.current
+    // Rest beats count but don't play — no haptic pulse either.
     if (
       s.haptics &&
+      (s.accents[latest.beat] ?? 0) !== 3 &&
       typeof navigator.vibrate === 'function' &&
       visualRef.current.state === 'playing'
     ) {
@@ -216,35 +263,6 @@ export function useMetronome(settings: MetronomeSettings) {
     rafRef.current = requestAnimationFrame(rafLoop)
     setIsPlaying(true)
   }, [rafLoop, schedulerLoop])
-
-  const stop = useCallback(() => {
-    if (schedulerRef.current !== null) {
-      clearInterval(schedulerRef.current)
-      schedulerRef.current = null
-    }
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = null
-    }
-    const context = getAudioContext()
-    const master = masterRef.current
-    if (master) {
-      master.gain.cancelScheduledValues(context.currentTime)
-      master.gain.setValueAtTime(master.gain.value, context.currentTime)
-      master.gain.linearRampToValueAtTime(0, context.currentTime + 0.05)
-      window.setTimeout(() => master.disconnect(), 120)
-    }
-    masterRef.current = null
-    eventsRef.current = []
-    visualRef.current = {
-      state: 'stopped',
-      beat: 0,
-      countInRemaining: 0,
-      barProgress: 0,
-      beatProgress: 0,
-    }
-    setIsPlaying(false)
-  }, [])
 
   useEffect(() => {
     return () => {

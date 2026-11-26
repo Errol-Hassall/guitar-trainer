@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  RHYTHM_PATTERNS,
   calculateTapTempo,
   clampBpm,
+  clampStopAfter,
   cycleAccent,
   defaultAccents,
   effectiveClicksPerMinute,
@@ -24,10 +26,11 @@ describe('clampBpm', () => {
 })
 
 describe('cycleAccent', () => {
-  it('cycles normal → accent → dominant → normal', () => {
+  it('cycles normal → accent → dominant → rest → normal', () => {
     expect(cycleAccent(0)).toBe(1)
     expect(cycleAccent(1)).toBe(2)
-    expect(cycleAccent(2)).toBe(0)
+    expect(cycleAccent(2)).toBe(3)
+    expect(cycleAccent(3)).toBe(0)
   })
 })
 
@@ -56,6 +59,7 @@ describe('subdivisionOffsets', () => {
   it('splits beats into the right fractions', () => {
     expect(subdivisionOffsets('eighth')).toEqual([0, 0.5])
     expect(subdivisionOffsets('sixteenth')).toEqual([0, 0.25, 0.5, 0.75])
+    expect(subdivisionOffsets('gallop')).toEqual([0, 1 / 3])
     expect(subdivisionOffsets('triplet')).toEqual([0, 1 / 3, 2 / 3])
     expect(subdivisionOffsets('swing')).toEqual([0, 2 / 3])
   })
@@ -88,5 +92,34 @@ describe('calculateTapTempo', () => {
 
   it('clamps the result', () => {
     expect(calculateTapTempo([0, 10])).toBe(999)
+  })
+})
+
+describe('clampStopAfter', () => {
+  it('clamps to whole bars in 0–999', () => {
+    expect(clampStopAfter(-5)).toBe(0)
+    expect(clampStopAfter(1234)).toBe(999)
+    expect(clampStopAfter(2.6)).toBe(3)
+  })
+
+  it('falls back to 0 (keep playing) for non-finite input', () => {
+    expect(clampStopAfter(NaN)).toBe(0)
+    expect(clampStopAfter(Infinity)).toBe(0)
+  })
+})
+
+describe('RHYTHM_PATTERNS', () => {
+  it('waltz is 3/4 with a dominant downbeat', () => {
+    const waltz = RHYTHM_PATTERNS.find((pattern) => pattern.id === 'waltz')
+    expect(waltz?.beats).toBe(3)
+    expect(waltz?.accents).toEqual([2, 0, 0])
+    expect(waltz?.subdivision).toBe('none')
+  })
+
+  it('shuffle and gallop are mirror-image two-note-per-beat patterns', () => {
+    const shuffle = RHYTHM_PATTERNS.find((pattern) => pattern.id === 'shuffle')
+    const gallop = RHYTHM_PATTERNS.find((pattern) => pattern.id === 'gallop')
+    expect(shuffle?.subdivision).toBe('swing') // long–short
+    expect(gallop?.subdivision).toBe('gallop') // short–long
   })
 })

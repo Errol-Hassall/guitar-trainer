@@ -21,12 +21,15 @@ import {
 } from '#/lib/types'
 import { onHandsFree } from '#/lib/hands-free'
 import {
+  RHYTHM_PATTERNS,
   calculateTapTempo,
   clampBpm,
+  clampStopAfter,
   cycleAccent,
   effectiveClicksPerMinute,
   resizeAccents,
   subdivisionOffsets,
+  type RhythmPattern,
 } from '#/lib/metronome'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -64,6 +67,8 @@ export function MetronomePanel({
     setAccents,
     countInBars,
     setCountInBars,
+    stopAfterBars,
+    setStopAfterBars,
     gapClick,
     setGapClick,
     sound,
@@ -122,6 +127,12 @@ export function MetronomePanel({
     setAccents((previous) => resizeAccents(previous, next))
   }
 
+  function applyPattern(pattern: RhythmPattern) {
+    if (pattern.beats !== undefined) handleBeatsChange(pattern.beats)
+    if (pattern.accents) setAccents([...pattern.accents])
+    setSubdivision(pattern.subdivision)
+  }
+
   function handleLoadPreset(preset: MetronomePreset) {
     void stop()
     setBpm(preset.bpm)
@@ -152,7 +163,7 @@ export function MetronomePanel({
     }
   }
 
-  const ticksPerBeat = subdivisionOffsets(subdivision).length
+  const offsets = subdivisionOffsets(subdivision)
 
   return (
     <div data-metronome-panel="true" data-bpm={bpm} className="flex flex-col gap-4">
@@ -251,7 +262,8 @@ export function MetronomePanel({
 
           <fieldset className="flex flex-col gap-2">
             <legend className="text-sm font-medium text-muted">
-              Accent pattern (tap a beat to cycle normal → accent → dominant)
+              Accent pattern (tap a beat to cycle normal → accent → dominant → rest;
+              rests count but don't play)
             </legend>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-8" data-accent-grid="true">
               {Array.from({ length: beats }, (_, index) => {
@@ -276,7 +288,9 @@ export function MetronomePanel({
                         ? 'border-accent bg-accent text-accent-ink'
                         : level === 1
                           ? 'border-teal bg-teal/20 text-teal'
-                          : 'border-line bg-raised text-muted'
+                          : level === 3
+                            ? 'border-dashed border-line bg-transparent text-muted'
+                            : 'border-line bg-raised text-muted'
                     }`}
                   >
                     {index + 1}
@@ -289,9 +303,26 @@ export function MetronomePanel({
             </div>
           </fieldset>
 
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm font-medium text-muted">Rhythm patterns</legend>
+            <div className="flex flex-wrap gap-2" data-pattern-grid="true">
+              {RHYTHM_PATTERNS.map((pattern) => (
+                <Button
+                  key={pattern.id}
+                  type="button"
+                  variant="secondary"
+                  data-pattern={pattern.id}
+                  onClick={() => applyPattern(pattern)}
+                >
+                  {pattern.name}
+                </Button>
+              ))}
+            </div>
+          </fieldset>
+
           <BeatDisplay
             beats={beats}
-            ticksPerBeat={ticksPerBeat}
+            offsets={offsets}
             accents={accents}
             getVisual={getVisual}
           />
@@ -349,6 +380,22 @@ export function MetronomePanel({
               <option value={1}>1 bar</option>
               <option value={2}>2 bars</option>
             </select>
+          </Field>
+          <Field
+            label="Stop after"
+            htmlFor="stop-after-input"
+            hint="Playing bars before it stops itself; 0 = keep playing"
+          >
+            <input
+              id="stop-after-input"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={999}
+              value={stopAfterBars}
+              onChange={(event) => setStopAfterBars(clampStopAfter(Number(event.target.value)))}
+              className={controlClass}
+            />
           </Field>
 
           {(

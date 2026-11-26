@@ -1,3 +1,4 @@
+import { ACCENT_LEVELS } from '#/lib/types'
 import type { AccentLevel, Subdivision } from '#/lib/types'
 
 export function clampBpm(value: number): number {
@@ -6,7 +7,13 @@ export function clampBpm(value: number): number {
 }
 
 export function cycleAccent(level: AccentLevel): AccentLevel {
-  return ((level + 1) % 3) as AccentLevel
+  return ((level + 1) % ACCENT_LEVELS.length) as AccentLevel
+}
+
+/** Whole bars to play before the metronome stops itself; 0 = keep playing. */
+export function clampStopAfter(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(999, Math.max(0, Math.round(value)))
 }
 
 export function defaultAccents(beats: number): AccentLevel[] {
@@ -34,8 +41,28 @@ export function subdivisionOffsets(subdivision: Subdivision): number[] {
       return [0, 1 / 3, 2 / 3]
     case 'swing':
       return [0, 2 / 3]
+    case 'gallop':
+      return [0, 1 / 3]
   }
 }
+
+export interface RhythmPattern {
+  id: 'waltz' | 'shuffle' | 'gallop'
+  name: string
+  /** When set, the pattern also changes the beats per bar. */
+  beats?: number
+  subdivision: Subdivision
+  /** When set, the pattern also replaces the accent pattern. */
+  accents?: AccentLevel[]
+}
+
+/** One-tap rhythm presets: waltz (strong–weak–weak), shuffle and gallop are
+ * mirror-image two-note-per-beat subdivisions, rests live in the accents. */
+export const RHYTHM_PATTERNS: readonly RhythmPattern[] = [
+  { id: 'waltz', name: 'Waltz (3/4)', beats: 3, subdivision: 'none', accents: [2, 0, 0] },
+  { id: 'shuffle', name: 'Shuffle (long–short)', subdivision: 'swing' },
+  { id: 'gallop', name: 'Gallop (short–long)', subdivision: 'gallop' },
+]
 
 export function effectiveClicksPerMinute(
   bpm: number,

@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–7 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–8 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -43,10 +43,10 @@ top of `theory.ts`.
 
 7. ✅ **Global persistent metronome** — state lifted to a root provider; the click keeps
    running through navigation and the nav bar shows a live "N BPM" indicator linking back.
-8. **Metronome extras** — stop-after-N-bars ("N rounds = N×Y bars, then stops itself")
-   and named rhythm patterns: gallop, shuffle, waltz (strong-weak-weak), and rest beats
-   ("count but don't play"). → We have count-in, gap click and subdivisions, but no
-   repeat/stop-after and no pattern presets with rests.
+8. ✅ **Metronome extras** — stop-after-N-bars auto-stop (single bar count; count-in
+   doesn't count) and named patterns: waltz (strong-weak-weak), shuffle (long–short, the
+   swing subdivision), gallop (short–long), rest beats as a fourth accent level that
+   counts but doesn't play.
 9. **Rhythm-accuracy trainer** *(partial — we only have tap tempo)* — a scored drill:
    hit the beat and get per-hit offset in ms ("late by N ms"), % on-beat at a given BPM,
    and consistency analysis with adaptive advice ("average is right but not steady yet —

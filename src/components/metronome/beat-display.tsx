@@ -16,12 +16,13 @@ function visualKey(visual: MetronomeVisual): string {
 
 export function BeatDisplay({
   beats,
-  ticksPerBeat,
+  offsets,
   accents,
   getVisual,
 }: {
   beats: number
-  ticksPerBeat: number
+  /** Tick positions within a beat (from subdivisionOffsets); dividers sit between them. */
+  offsets: number[]
   accents: AccentLevel[]
   getVisual: () => MetronomeVisual
 }) {
@@ -81,7 +82,15 @@ export function BeatDisplay({
           return (
             <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-1">
               <span
-                className={`text-xs font-semibold ${level === 2 ? 'text-accent' : level === 1 ? 'text-teal' : 'text-muted/70'}`}
+                className={`text-xs font-semibold ${
+                  level === 2
+                    ? 'text-accent'
+                    : level === 1
+                      ? 'text-teal'
+                      : level === 3
+                        ? 'text-muted line-through'
+                        : 'text-muted/70'
+                }`}
               >
                 {ACCENT_SHORT[level]}
               </span>
@@ -90,11 +99,11 @@ export function BeatDisplay({
                   className="absolute inset-x-0 bottom-0 bg-accent"
                   style={{ height: `${fill * 100}%` }}
                 />
-                {Array.from({ length: ticksPerBeat - 1 }, (_, tick) => (
+                {offsets.slice(1).map((offset) => (
                   <span
-                    key={tick}
+                    key={offset}
                     className="absolute inset-x-0 border-t border-bg/70"
-                    style={{ bottom: `${((tick + 1) / ticksPerBeat) * 100}%` }}
+                    style={{ bottom: `${offset * 100}%` }}
                   />
                 ))}
               </div>

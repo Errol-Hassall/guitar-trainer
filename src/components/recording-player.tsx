@@ -44,6 +44,7 @@ export function RecordingPlayer({
     subdivision: 'none',
     accents: [2, 0, 0, 0],
     countInBars: 0,
+    stopAfterBars: 0,
     gapClick: false,
     sound: 'woodblock',
     haptics: false,

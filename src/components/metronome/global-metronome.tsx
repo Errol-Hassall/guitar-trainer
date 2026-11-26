@@ -17,6 +17,8 @@ export interface GlobalMetronome {
   setAccents: Dispatch<SetStateAction<AccentLevel[]>>
   countInBars: number
   setCountInBars: Dispatch<SetStateAction<number>>
+  stopAfterBars: number
+  setStopAfterBars: Dispatch<SetStateAction<number>>
   gapClick: boolean
   setGapClick: Dispatch<SetStateAction<boolean>>
   sound: ClickSound
@@ -51,6 +53,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
   const [subdivision, setSubdivision] = useState<Subdivision>('none')
   const [accents, setAccents] = useState<AccentLevel[]>(() => defaultAccents(4))
   const [countInBars, setCountInBars] = useState(1)
+  const [stopAfterBars, setStopAfterBars] = useState(0)
   const [gapClick, setGapClick] = useState(false)
   const [sound, setSound] = useState<ClickSound>('woodblock')
   const [haptics, setHaptics] = useState(false)
@@ -67,6 +70,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       subdivision,
       accents,
       countInBars,
+      stopAfterBars,
       gapClick,
       sound,
       haptics,
@@ -84,6 +88,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       subdivision,
       accents,
       countInBars,
+      stopAfterBars,
       gapClick,
       sound,
       haptics,
@@ -110,6 +115,8 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       setAccents,
       countInBars,
       setCountInBars,
+      stopAfterBars,
+      setStopAfterBars,
       gapClick,
       setGapClick,
       sound,
@@ -136,6 +143,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       subdivision,
       accents,
       countInBars,
+      stopAfterBars,
       gapClick,
       sound,
       haptics,
