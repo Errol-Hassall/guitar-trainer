@@ -171,6 +171,20 @@ export const logEarRoundSchema = z
     path: ['correct'],
   })
 
+// --- Rhythm trainer ---------------------------------------------------------------
+
+export const logRhythmRunSchema = z.object({
+  bpm: z.number().int().min(1).max(999),
+  hits: z.number().int().min(0),
+  onBeatPct: z.number().min(0).max(100),
+  averageMs: z.number(),
+  consistencyMs: z.number().min(0),
+})
+
+export const listRhythmRunsSchema = z.object({
+  limit: z.number().int().min(1).max(50).default(10),
+})
+
 // --- Audio tools ------------------------------------------------------------------
 
 /** ~15MB of audio; base64 inflates by 4/3. */

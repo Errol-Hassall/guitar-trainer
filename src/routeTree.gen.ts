@@ -22,6 +22,7 @@ import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RecordingsRouteImport } from './routes/recordings'
 import { Route as ScalesRouteImport } from './routes/scales'
 import { Route as TracksRouteImport } from './routes/tracks'
+import { Route as TrainerRouteImport } from './routes/trainer'
 import { Route as TunerRouteImport } from './routes/tuner'
 import { Route as EarIndexRouteImport } from './routes/ear/index'
 import { Route as EarDrillRouteImport } from './routes/ear/$drill'
@@ -100,6 +101,11 @@ const TracksRoute = TracksRouteImport.update({
   path: '/tracks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainerRoute = TrainerRouteImport.update({
+  id: '/trainer',
+  path: '/trainer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TunerRoute = TunerRouteImport.update({
   id: '/tuner',
   path: '/tuner',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
+  '/trainer': typeof TrainerRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
+  '/trainer': typeof TrainerRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
+  '/trainer': typeof TrainerRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
   '/exercises/$exerciseId': typeof ExercisesExerciseIdRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/scales'
     | '/tracks'
+    | '/trainer'
     | '/tuner'
     | '/ear/$drill'
     | '/exercises/$exerciseId'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/scales'
     | '/tracks'
+    | '/trainer'
     | '/tuner'
     | '/ear/$drill'
     | '/exercises/$exerciseId'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/recordings'
     | '/scales'
     | '/tracks'
+    | '/trainer'
     | '/tuner'
     | '/ear/$drill'
     | '/exercises/$exerciseId'
@@ -341,6 +353,7 @@ export interface RootRouteChildren {
   RecordingsRoute: typeof RecordingsRoute
   ScalesRoute: typeof ScalesRoute
   TracksRoute: typeof TracksRoute
+  TrainerRoute: typeof TrainerRoute
   TunerRoute: typeof TunerRoute
   EarDrillRoute: typeof EarDrillRoute
   ExercisesExerciseIdRoute: typeof ExercisesExerciseIdRoute
@@ -448,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TracksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainer': {
+      id: '/trainer'
+      path: '/trainer'
+      fullPath: '/trainer'
+      preLoaderRoute: typeof TrainerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tuner': {
       id: '/tuner'
       path: '/tuner'
@@ -549,6 +569,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecordingsRoute: RecordingsRoute,
   ScalesRoute: ScalesRoute,
   TracksRoute: TracksRoute,
+  TrainerRoute: TrainerRoute,
   TunerRoute: TunerRoute,
   EarDrillRoute: EarDrillRoute,
   ExercisesExerciseIdRoute: ExercisesExerciseIdRoute,

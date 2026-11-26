@@ -37,6 +37,8 @@ export interface GlobalMetronome {
   start: () => Promise<void>
   stop: () => void
   getVisual: () => MetronomeVisual
+  /** Signed ms from the nearest beat while playing; null when stopped. */
+  getTapOffsetMs: () => number | null
 }
 
 const MetronomeContext = createContext<GlobalMetronome | null>(null)
@@ -99,7 +101,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
     ],
   )
 
-  const { isPlaying, start, stop, getVisual } = useMetronome(settings)
+  const { isPlaying, start, stop, getVisual, getTapOffsetMs } = useMetronome(settings)
 
   const value = useMemo<GlobalMetronome>(
     () => ({
@@ -135,6 +137,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       start,
       stop,
       getVisual,
+      getTapOffsetMs,
     }),
     [
       bpm,
@@ -155,6 +158,7 @@ export function MetronomeProvider({ children }: { children: ReactNode }) {
       start,
       stop,
       getVisual,
+      getTapOffsetMs,
     ],
   )
 

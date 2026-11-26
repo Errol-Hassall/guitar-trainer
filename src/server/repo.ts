@@ -17,6 +17,7 @@ import type {
   PracticeSession,
   PresetInput,
   RecordingInput,
+  RhythmRun,
   RecordingSummary,
   SessionSection,
   SessionStatus,
@@ -902,6 +903,44 @@ export function logEarRound(input: {
        correct = correct + excluded.correct,
        updated_at = excluded.updated_at`,
   ).run(input.drill, input.level, input.total, input.correct, nowIso())
+}
+
+interface RhythmRunRow {
+  id: number
+  bpm: number
+  hits: number
+  on_beat_pct: number
+  average_ms: number
+  consistency_ms: number
+  created_at: string
+}
+
+export function listRhythmRuns(limit: number): RhythmRun[] {
+  const rows = db
+    .prepare('SELECT * FROM rhythm_stats ORDER BY created_at DESC, id DESC LIMIT ?')
+    .all(limit) as unknown as RhythmRunRow[]
+  return rows.map((row) => ({
+    id: Number(row.id),
+    bpm: Number(row.bpm),
+    hits: Number(row.hits),
+    onBeatPct: Number(row.on_beat_pct),
+    averageMs: Number(row.average_ms),
+    consistencyMs: Number(row.consistency_ms),
+    createdAt: row.created_at,
+  }))
+}
+
+export function logRhythmRun(input: {
+  bpm: number
+  hits: number
+  onBeatPct: number
+  averageMs: number
+  consistencyMs: number
+}): void {
+  db.prepare(
+    `INSERT INTO rhythm_stats (bpm, hits, on_beat_pct, average_ms, consistency_ms, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(input.bpm, input.hits, input.onBeatPct, input.averageMs, input.consistencyMs, nowIso())
 }
 
 // --- Workflow: streak dates, mood, weekly reviews -----------------------------

@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–8 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–9 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -47,11 +47,9 @@ top of `theory.ts`.
    doesn't count) and named patterns: waltz (strong-weak-weak), shuffle (long–short, the
    swing subdivision), gallop (short–long), rest beats as a fourth accent level that
    counts but doesn't play.
-9. **Rhythm-accuracy trainer** *(partial — we only have tap tempo)* — a scored drill:
-   hit the beat and get per-hit offset in ms ("late by N ms"), % on-beat at a given BPM,
-   and consistency analysis with adaptive advice ("average is right but not steady yet —
-   drop the BPM and focus on steadiness"). → Our tap tempo sets the BPM; it never scores
-   the player.
+9. ✅ **Rhythm-accuracy trainer** — `/trainer` scores taps against the shared metronome:
+   per-hit offset ("late by N ms"), % on beat (10%-of-beat window, ±50 ms cap), average
+   bias, consistency (σ) and adaptive advice; runs persist in `rhythm_stats`.
 10. **LickLab** — generated short playable phrases (call-and-response style) in a chosen
     key, randomisable by style (blues / jazz), annotated with technique (slide into the
     note, vibrato, finger order 1-3-2-4). Generation validates against playability rules

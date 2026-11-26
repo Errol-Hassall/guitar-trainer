@@ -178,6 +178,17 @@ export interface PresetInput {
   accents: AccentLevel[]
 }
 
+/** One scored run of the rhythm trainer. */
+export interface RhythmRun {
+  id: number
+  bpm: number
+  hits: number
+  onBeatPct: number
+  averageMs: number
+  consistencyMs: number
+  createdAt: string
+}
+
 export interface Exercise {
   id: number
   name: string

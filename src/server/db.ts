@@ -184,6 +184,18 @@ const MIGRATIONS: string[] = [
     PRIMARY KEY (drill, level)
   );
   `,
+  `
+  CREATE TABLE rhythm_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bpm INTEGER NOT NULL CHECK (bpm BETWEEN 1 AND 999),
+    hits INTEGER NOT NULL CHECK (hits >= 0),
+    on_beat_pct REAL NOT NULL CHECK (on_beat_pct BETWEEN 0 AND 100),
+    average_ms REAL NOT NULL,
+    consistency_ms REAL NOT NULL CHECK (consistency_ms >= 0),
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX idx_rhythm_stats_created ON rhythm_stats(created_at DESC);
+  `,
 ]
 
 export const databasePath = resolve(

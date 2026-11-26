@@ -19,7 +19,9 @@ import {
   importTemplatesSchema,
   learningPathIdSchema,
   listRecordingsSchema,
+  listRhythmRunsSchema,
   logEarRoundSchema,
+  logRhythmRunSchema,
   listSessionsSchema,
   logProgressSchema,
   oneThingSchema,
@@ -256,6 +258,19 @@ export const logEarRound = createServerFn({ method: 'POST' })
   .validator(logEarRoundSchema)
   .handler(({ data }) => {
     repo.logEarRound(data)
+    return true
+  })
+
+// --- Rhythm trainer ---------------------------------------------------------------
+
+export const listRhythmRuns = createServerFn({ method: 'GET' })
+  .validator(listRhythmRunsSchema)
+  .handler(({ data }) => repo.listRhythmRuns(data.limit))
+
+export const logRhythmRun = createServerFn({ method: 'POST' })
+  .validator(logRhythmRunSchema)
+  .handler(({ data }) => {
+    repo.logRhythmRun(data)
     return true
   })
 

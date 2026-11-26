@@ -53,6 +53,8 @@ export function useMetronome(settings: MetronomeSettings) {
   const schedulerRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
   const nextTickTimeRef = useRef(0)
+  /** Audio time of the first scheduled tick (count-in beat 1 or playing beat 1). */
+  const gridStartRef = useRef(0)
   const tickIndexRef = useRef(0)
   const barIndexRef = useRef(0)
   const countInBeatsRef = useRef(0)
@@ -247,6 +249,7 @@ export function useMetronome(settings: MetronomeSettings) {
 
     const s = settingsRef.current
     nextTickTimeRef.current = context.currentTime + 0.15
+    gridStartRef.current = nextTickTimeRef.current
     tickIndexRef.current = 0
     barIndexRef.current = 0
     countInBeatsRef.current = s.countInBars * s.beats
@@ -276,5 +279,19 @@ export function useMetronome(settings: MetronomeSettings) {
   // Stable identity: consumers may poll it in effects without re-subscribing.
   const getVisual = useCallback(() => visualRef.current, [])
 
-  return { isPlaying, start, stop, getVisual }
+  /**
+   * Signed ms from the nearest beat of the running grid (positive = late);
+   * null when not playing. shortcut: assumes a constant BPM for the run —
+   * consumers that score taps must reset when the tempo changes.
+   */
+  const getTapOffsetMs = useCallback(() => {
+    if (schedulerRef.current === null || masterRef.current === null) return null
+    const s = settingsRef.current
+    const now = getAudioContext().currentTime
+    const beatDuration = 60 / s.bpm
+    const beatsIn = (now - gridStartRef.current) / beatDuration
+    return (beatsIn - Math.round(beatsIn)) * beatDuration * 1000
+  }, [])
+
+  return { isPlaying, start, stop, getVisual, getTapOffsetMs }
 }

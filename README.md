@@ -17,6 +17,13 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Tap tempo, and saved presets (built-ins are read-only)
 - Global and persistent: the click keeps running while you navigate anywhere in the app, and the nav bar shows a live "N BPM" indicator that links back to it
 
+**Rhythm trainer**
+
+- Tap along with the shared metronome (button or space bar); every tap is scored against the nearest beat
+- Per-hit feedback ("late by N ms"), % on beat (window = 10% of the beat, capped at ±50 ms), average bias and consistency (σ)
+- Adaptive advice (e.g. "average is right but not steady yet — drop the BPM and focus on steadiness")
+- Runs are saved to a history list (newest first)
+
 **Practice sessions**
 
 - Built-in *Daily 60* and *Emergency 20* templates plus your own custom templates (1–12 sections, 1–180 min each)
@@ -229,7 +236,9 @@ so voicings follow the standard fingering shown). In the keys page: sevenths per
 enharmonic labels (Db/Ab/Eb — sharp spellings are used to match the rest of the app) and
 a drag-to-pan or zoomable view. In the modes page: full colour themes per mode (swatch dots
 only) and genre-specific drill content. In the metronome extras: hoksai's "N rounds × Y bars"
-split (a single stop-after bar count instead) and user-editable pattern ratios.
+split (a single stop-after bar count instead) and user-editable pattern ratios. In the rhythm
+trainer: automatic tempo adjustment (the advice tells you which way to turn, you turn it)
+and a per-hit timeline view.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
