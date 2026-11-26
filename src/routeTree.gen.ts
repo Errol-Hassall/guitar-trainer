@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ArpeggiosRouteImport } from './routes/arpeggios'
 import { Route as ChordsRouteImport } from './routes/chords'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -34,6 +35,11 @@ import { Route as TemplatesNewRouteImport } from './routes/templates/new'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArpeggiosRoute = ArpeggiosRouteImport.update({
+  id: '/arpeggios',
+  path: '/arpeggios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChordsRoute = ChordsRouteImport.update({
@@ -139,6 +145,7 @@ const TemplatesNewRoute = TemplatesNewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/arpeggios'
     | '/chords'
     | '/data'
     | '/history'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/arpeggios'
     | '/chords'
     | '/data'
     | '/history'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/arpeggios'
     | '/chords'
     | '/data'
     | '/history'
@@ -281,6 +293,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ArpeggiosRoute: typeof ArpeggiosRoute
   ChordsRoute: typeof ChordsRoute
   DataRoute: typeof DataRoute
   HistoryRoute: typeof HistoryRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arpeggios': {
+      id: '/arpeggios'
+      path: '/arpeggios'
+      fullPath: '/arpeggios'
+      preLoaderRoute: typeof ArpeggiosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chords': {
@@ -457,6 +477,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ArpeggiosRoute: ArpeggiosRoute,
   ChordsRoute: ChordsRoute,
   DataRoute: DataRoute,
   HistoryRoute: HistoryRoute,

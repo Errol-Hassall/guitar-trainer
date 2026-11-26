@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CHORD_DIAGRAMS,
   chordDiagram,
+  chordPcs,
   chordToText,
   diatonicChords,
   keySignature,
@@ -107,8 +108,8 @@ describe('scales', () => {
 
   it('filters the neck to a fret window with inclusive boundaries', () => {
     const cMajor = neckNotes(0, scaleTypeById('major')!, 12)
-    // Exactly fret 3: low E, A, D and B strings hold scale notes.
-    expect(windowNotes(cMajor, 3, 3)).toHaveLength(4)
+    // Exactly fret 3: five of the six strings hold a C-major note.
+    expect(windowNotes(cMajor, 3, 3)).toHaveLength(5)
     // The default practice window of C major (frets 1–7) holds 24 notes.
     expect(windowNotes(cMajor, 1, 7)).toHaveLength(24)
     // G minor pentatonic in the same window holds 17.
@@ -118,6 +119,15 @@ describe('scales', () => {
 })
 
 describe('chord diagrams', () => {
+  it('derives the chord tones of a diagram as ascending pitch classes', () => {
+    expect(chordPcs(chordDiagram('C')!)).toEqual([0, 4, 7]) // C E G
+    expect(chordPcs(chordDiagram('Am')!)).toEqual([0, 4, 9]) // A C E (G string fret 2 is an A)
+    // The open C7 voicing has no G: C E Bb.
+    expect(chordPcs(chordDiagram('C7')!)).toEqual([0, 4, 10])
+    // Muted strings contribute no tones (D-shape on the D-G-B-e strings).
+    expect(chordPcs({ name: 'X', frets: [null, null, 0, 2, 3, 2], baseFret: 1 })).toEqual([2, 6, 9])
+  })
+
   it('has a diagram for every common chord, each with six strings in range', () => {
     expect(CHORD_DIAGRAMS.length).toBeGreaterThanOrEqual(15)
     for (const diagram of CHORD_DIAGRAMS) {

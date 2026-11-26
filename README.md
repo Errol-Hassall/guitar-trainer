@@ -40,6 +40,10 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Six scale types (major, natural minor, major/minor pentatonic, blues, bebop dominant) in all 12 keys, mapped to the fretboard with correctly spelled note names (F# major ends in E#, C blues shows Gb/Bb)
 - Practice window: pick any fret range and play it back up and down through the Web Audio synth, with each sounding note highlighted
 
+**Arpeggios**
+
+- The chord tones of any of the 20 common chords (triads and sevenths) mapped to the fretboard, with the diagram alongside and the same fret-window up/down playback as the scale library
+
 **Ear training**
 
 - Four scored drills, all synthesized in the browser with Web Audio (no samples): **Intervals** (the ten standard ones), **Scale degrees** (major scale 1–7, tonic played first), **Chord quality** (level 1 major/minor, level 2 adds maj7/min7/dom7) and **Progressions** (four common diatonic three-chord progressions)
@@ -202,7 +206,9 @@ Also skipped in the chord library: fingerings for exotic barre positions beyond 
 common chords (the diatonic-in-key lookup still lists them by name), PNG export of
 diagrams (copy-as-ASCII instead) and finger numbers on charts. In the scale library:
 discrete "box" position shapes (the whole-neck view plus fret window covers them) and
-per-string 3-note pattern drills (playback runs the full window).
+per-string 3-note pattern drills (playback runs the full window). In the arpeggio page:
+named inversions and per-pattern practice (chord tones are derived from the diagram,
+so voicings follow the standard fingering shown).
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

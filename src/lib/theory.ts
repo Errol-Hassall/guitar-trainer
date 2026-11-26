@@ -183,8 +183,11 @@ export function scaleNoteNames(rootPc: RootPc, type: ScaleType): string[] {
   })
 }
 
+/** Open-string MIDI notes, low E2 → high e4. */
+const OPEN_MIDI = [40, 45, 50, 55, 59, 64] as const
+
 /** Open-string pitch classes, low E → high e. */
-export const OPEN_STRINGS = [4, 9, 2, 7, 11, 5] as const
+export const OPEN_STRINGS = [4, 9, 2, 7, 11, 4] as const
 
 export interface NeckNote {
   /** 0 = low E … 5 = high e. */
@@ -194,14 +197,14 @@ export interface NeckNote {
   name: string
 }
 
-/** Every scale note on the neck (frets 0–`maxFret`), low to high. */
-export function neckNotes(rootPc: RootPc, type: ScaleType, maxFret = 12): NeckNote[] {
-  const pcs = new Set(scalePcs(rootPc, type))
+/** Every note of a pitch-class set on the neck (frets 0–`maxFret`), low to high. */
+export function neckNotesFor(pcs: Iterable<number>, maxFret = 12): NeckNote[] {
+  const set = new Set(pcs)
   const notes: NeckNote[] = []
   for (let stringIndex = 0; stringIndex < 6; stringIndex += 1) {
     for (let fret = 0; fret <= maxFret; fret += 1) {
-      if (pcs.has((OPEN_STRINGS[stringIndex] + fret) % 12)) {
-        const midi = 40 + stringIndex * 5 + fret // low E2 = MIDI 40
+      if (set.has((OPEN_STRINGS[stringIndex] + fret) % 12)) {
+        const midi = OPEN_MIDI[stringIndex] + fret
         notes.push({ stringIndex, fret, midi, name: midiName(midi) })
       }
     }
@@ -209,9 +212,23 @@ export function neckNotes(rootPc: RootPc, type: ScaleType, maxFret = 12): NeckNo
   return notes.sort((a, b) => a.midi - b.midi || a.stringIndex - b.stringIndex)
 }
 
+/** Every scale note on the neck (frets 0–`maxFret`), low to high. */
+export function neckNotes(rootPc: RootPc, type: ScaleType, maxFret = 12): NeckNote[] {
+  return neckNotesFor(scalePcs(rootPc, type), maxFret)
+}
+
 /** The scale notes inside a fret window (inclusive), ready to play in order. */
 export function windowNotes(neck: NeckNote[], fromFret: number, toFret: number): NeckNote[] {
   return neck.filter((note) => note.fret >= fromFret && note.fret <= toFret)
+}
+
+/** The unique pitch classes of a chord diagram's sounded strings, ascending. */
+export function chordPcs(diagram: ChordDiagram): number[] {
+  const pcs = new Set<number>()
+  diagram.frets.forEach((fret, stringIndex) => {
+    if (fret !== null) pcs.add((OPEN_STRINGS[stringIndex] + fret) % 12)
+  })
+  return [...pcs].sort((a, b) => a - b)
 }
 
 // --- Chord diagrams -----------------------------------------------------------------

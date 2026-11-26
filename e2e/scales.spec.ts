@@ -29,13 +29,13 @@ test.describe('scale library', () => {
     // Default window frets 0–7 holds 30 C-major notes.
     await expect(page.locator('[data-window-count]')).toHaveAttribute('data-window-count', '30')
 
-    // Narrowing to frets 1–3 leaves 10; reversed bounds are swapped, not emptied.
+    // Narrowing to frets 1–3 leaves 11; reversed bounds are swapped, not emptied.
     await page.getByLabel('From fret').fill('1')
     await page.getByLabel('To fret').fill('3')
-    await expect(page.locator('[data-window-count]')).toHaveAttribute('data-window-count', '10')
+    await expect(page.locator('[data-window-count]')).toHaveAttribute('data-window-count', '11')
     await page.getByLabel('From fret').fill('3')
     await page.getByLabel('To fret').fill('1')
-    await expect(page.locator('[data-window-count]')).toHaveAttribute('data-window-count', '10')
+    await expect(page.locator('[data-window-count]')).toHaveAttribute('data-window-count', '11')
 
     // Playing disables the button until the round trip finishes.
     const play = page.locator('[data-practice-play]')

@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–2 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–3 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -28,7 +28,8 @@ HokSai has a whole six-page theory section:
    mode with per-string 3-note patterns plus an adjustable "fret window" / difficulty.
    → Built: six types × 12 keys on the whole neck with a fret-window playback practice
    mode. Modes ship as item 6; "boxes" are covered by the whole-neck view + window.
-3. **Arpeggios page** — dedicated arpeggio content. → Missing.
+3. ✅ **Arpeggios page** — chord tones of the 20 common chords on the fretboard with
+   fret-window playback (triad/seventh voicings come from the diagram data).
 4. **Keys page** — key signatures for major and minor with accidentals, chord sets per key.
    → Missing.
 5. **Circle of fifths** — interactive circle. → Missing.
