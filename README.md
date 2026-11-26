@@ -32,7 +32,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 
 **Practice sessions**
 
-- Built-in *Daily 60* and *Emergency 20* templates plus your own custom templates (1–12 sections, 1–180 min each)
+- Built-in *Finger Warm-up* (6 min), *Daily 60* and *Emergency 20* templates plus your own custom templates (1–12 sections, 1–180 min each); home has a one-tap warm-up quick start
 - Full or light sessions (light = half durations, 1-minute floor); rest days logged in one tap
 - Weekly theme rotation (Mon–Sun), overridable per session
 - Per-section countdown with pause/skip, section notes (≤4000 chars), auto-advance with chime (toggleable)

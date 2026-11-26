@@ -53,6 +53,23 @@ test.describe('sessions', () => {
     await expect(page.locator('[data-session-status="completed"]')).toBeVisible()
   })
 
+  test('starts the built-in warm-up from home and runs it to completion', async ({ page }) => {
+    await page.goto('/')
+    await page.locator('[data-warmup-start]').click()
+
+    await expect(page).toHaveURL(/\/sessions\/\d+/)
+    await expect(page.locator('[data-session-status="active"]')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Finger Warm-up' })).toBeVisible()
+
+    // Three two-minute sections; skip each one and advance past the first two.
+    await page.getByLabel('Auto-advance').uncheck()
+    for (let i = 0; i < 3; i += 1) {
+      await page.getByRole('button', { name: 'Skip section' }).click()
+      if (i < 2) await page.getByRole('button', { name: 'Next section' }).click()
+    }
+    await expect(page.locator('[data-session-status="completed"]')).toBeVisible()
+  })
+
   test('lists completed sessions in history', async ({ page }) => {
     await createSingleSectionTemplate(page, 'E2E history')
     await startTemplateSession(page, 'E2E history')

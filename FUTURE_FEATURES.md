@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -59,8 +59,9 @@ top of `theory.ts`.
     practice flow. → Our backing tracks load from file or http(s) URL, but direct
     YouTube audio is CORS-blocked in-browser, so this would need an explicit decision
     (embed-player side-by-side vs server-side fetch).
-12. **Warm-up content** — a "finger warm-up before practice" entry point as first-class
-    content. → Our templates can model this, but there is no dedicated warm-up flow.
+12. ✅ **Warm-up content** — built-in *Finger Warm-up* template (chromatics, stretch &
+    slides, picking — 6 min) with a one-tap quick start on home; existing installs pick it
+    up on the next seed pass.
 
 ## Paths & games
 

@@ -98,6 +98,7 @@ function Home() {
   const [error, setError] = useState<string | null>(null)
 
   const active = data.active
+  const warmup = data.templates.find((template) => template.slug === 'warm-up')
   const daily = data.templates.find((template) => template.slug === 'daily-60')
   const emergency = data.templates.find((template) => template.slug === 'emergency-20')
 
@@ -204,6 +205,11 @@ function Home() {
             </Field>
 
             <div className="flex flex-wrap gap-3">
+              {warmup ? (
+                <Button size="lg" onClick={() => void startWith(warmup, 'full')} disabled={busy} data-warmup-start="true">
+                  <Play className="size-5" aria-hidden="true" /> Warm-up · 6 min
+                </Button>
+              ) : null}
               {daily ? (
                 <>
                   <Button size="lg" onClick={() => void startWith(daily, 'full')} disabled={busy}>

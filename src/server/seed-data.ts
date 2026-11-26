@@ -13,6 +13,15 @@ interface SeedPreset extends PresetInput {
 
 export const DEFAULT_TEMPLATES: SeedTemplate[] = [
   {
+    slug: 'warm-up',
+    name: 'Finger Warm-up',
+    sections: [
+      { name: 'Chromatics', minutes: 2 },
+      { name: 'Stretch & Slides', minutes: 2 },
+      { name: 'Picking Warm-up', minutes: 2 },
+    ],
+  },
+  {
     slug: 'daily-60',
     name: 'Daily 60',
     sections: [

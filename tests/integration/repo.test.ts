@@ -77,7 +77,9 @@ describe('seed data', () => {
 
   it('is idempotent', () => {
     seedDatabase(db)
-    expect(repo.listTemplates().filter((template) => template.isBuiltin)).toHaveLength(2)
+    const builtins = repo.listTemplates().filter((template) => template.isBuiltin)
+    expect(builtins).toHaveLength(3)
+    expect(builtins.map((template) => template.slug)).toContain('warm-up')
     expect(repo.listPresets().filter((preset) => preset.isBuiltin)).toHaveLength(3)
   })
 })
