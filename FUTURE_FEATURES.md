@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–9 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -50,11 +50,11 @@ top of `theory.ts`.
 9. ✅ **Rhythm-accuracy trainer** — `/trainer` scores taps against the shared metronome:
    per-hit offset ("late by N ms"), % on beat (10%-of-beat window, ±50 ms cap), average
    bias, consistency (σ) and adaptive advice; runs persist in `rhythm_stats`.
-10. **LickLab** — generated short playable phrases (call-and-response style) in a chosen
-    key, randomisable by style (blues / jazz), annotated with technique (slide into the
-    note, vibrato, finger order 1-3-2-4). Generation validates against playability rules
-    and retries; it is AI-assisted ("create with AI"). → We have nothing like generated
-    playable content; our learning-path steps link out to YouTube instead.
+10. ✅ **LickLab** — `/licklab` generates 8-note phrases from the scale data: key, scale
+    and style (blues / jazz) pick the pool and step size; a seed makes every lick
+    reproducible. Notes carry technique annotations (slide / vibrato / hammer-on), are
+    validated to stay inside one five-fret position (with retry), play back over Web Audio
+    and copy as plain text. Deterministic local generation — no LLM, per the exclusion.
 11. **YouTube integration** — paste a YouTube URL or video ID to bring a song into the
     practice flow. → Our backing tracks load from file or http(s) URL, but direct
     YouTube audio is CORS-blocked in-browser, so this would need an explicit decision

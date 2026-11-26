@@ -82,6 +82,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 { to: '/circle', label: 'Circle' },
                 { to: '/modes', label: 'Modes' },
                 { to: '/trainer', label: 'Trainer' },
+                { to: '/licklab', label: 'LickLab' },
                 { to: '/history', label: 'History' },
                 { to: '/progress', label: 'Progress' },
                 { to: '/data', label: 'Data' },

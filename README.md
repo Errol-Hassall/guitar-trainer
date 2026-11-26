@@ -24,6 +24,12 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Adaptive advice (e.g. "average is right but not steady yet — drop the BPM and focus on steadiness")
 - Runs are saved to a history list (newest first)
 
+**LickLab**
+
+- Generates short playable phrases (8 notes) from the scale data: pick key, scale and style (blues / jazz), everything regenerates live
+- Deterministic — the same seed always gives the same lick; "New seed" randomises it
+- Notes are annotated with technique (slide / vibrato / hammer-on), validated to stay inside one five-fret hand position, played back with Web Audio and copyable as plain text
+
 **Practice sessions**
 
 - Built-in *Daily 60* and *Emergency 20* templates plus your own custom templates (1–12 sections, 1–180 min each)
@@ -238,7 +244,10 @@ a drag-to-pan or zoomable view. In the modes page: full colour themes per mode (
 only) and genre-specific drill content. In the metronome extras: hoksai's "N rounds × Y bars"
 split (a single stop-after bar count instead) and user-editable pattern ratios. In the rhythm
 trainer: automatic tempo adjustment (the advice tells you which way to turn, you turn it)
-and a per-hit timeline view.
+and a per-hit timeline view. In LickLab: call-and-response A/B phrasing (one phrase at a
+time), finger-order annotations (technique labels only) and AI-assisted generation
+(deterministic local generation instead, per the no-LLM decision); licks are not saved —
+the seed reproduces them.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

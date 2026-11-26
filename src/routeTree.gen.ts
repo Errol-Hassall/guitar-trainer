@@ -16,6 +16,7 @@ import { Route as CircleRouteImport } from './routes/circle'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as KeysRouteImport } from './routes/keys'
+import { Route as LicklabRouteImport } from './routes/licklab'
 import { Route as MetronomeRouteImport } from './routes/metronome'
 import { Route as ModesRouteImport } from './routes/modes'
 import { Route as ProgressRouteImport } from './routes/progress'
@@ -69,6 +70,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const KeysRoute = KeysRouteImport.update({
   id: '/keys',
   path: '/keys',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicklabRoute = LicklabRouteImport.update({
+  id: '/licklab',
+  path: '/licklab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetronomeRoute = MetronomeRouteImport.update({
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
+  '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
   '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
+  '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
   '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
+  '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
   '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/history'
     | '/keys'
+    | '/licklab'
     | '/metronome'
     | '/modes'
     | '/progress'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/history'
     | '/keys'
+    | '/licklab'
     | '/metronome'
     | '/modes'
     | '/progress'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/history'
     | '/keys'
+    | '/licklab'
     | '/metronome'
     | '/modes'
     | '/progress'
@@ -347,6 +359,7 @@ export interface RootRouteChildren {
   DataRoute: typeof DataRoute
   HistoryRoute: typeof HistoryRoute
   KeysRoute: typeof KeysRoute
+  LicklabRoute: typeof LicklabRoute
   MetronomeRoute: typeof MetronomeRoute
   ModesRoute: typeof ModesRoute
   ProgressRoute: typeof ProgressRoute
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/keys'
       fullPath: '/keys'
       preLoaderRoute: typeof KeysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licklab': {
+      id: '/licklab'
+      path: '/licklab'
+      fullPath: '/licklab'
+      preLoaderRoute: typeof LicklabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metronome': {
@@ -563,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataRoute: DataRoute,
   HistoryRoute: HistoryRoute,
   KeysRoute: KeysRoute,
+  LicklabRoute: LicklabRoute,
   MetronomeRoute: MetronomeRoute,
   ModesRoute: ModesRoute,
   ProgressRoute: ProgressRoute,
