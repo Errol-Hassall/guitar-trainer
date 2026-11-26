@@ -77,6 +77,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 { to: '/scales', label: 'Scales' },
                 { to: '/arpeggios', label: 'Arpeggios' },
                 { to: '/keys', label: 'Keys' },
+                { to: '/circle', label: 'Circle' },
                 { to: '/history', label: 'History' },
                 { to: '/progress', label: 'Progress' },
                 { to: '/data', label: 'Data' },

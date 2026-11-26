@@ -49,6 +49,10 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Key signatures for all 12 major and minor keys (minor via its relative major, correctly spelled — C# major shows 7 sharps) with the relative partner named
 - The seven diatonic triads of any key with Roman numerals and qualities (major: I–vii°, natural minor: i–VII)
 
+**Circle of fifths**
+
+- Interactive ring of all twelve keys by ascending fifth — tap (or keyboard-select) a segment to see its signature, relative minor, and diatonic triads
+
 **Ear training**
 
 - Four scored drills, all synthesized in the browser with Web Audio (no samples): **Intervals** (the ten standard ones), **Scale degrees** (major scale 1–7, tonic played first), **Chord quality** (level 1 major/minor, level 2 adds maj7/min7/dom7) and **Progressions** (four common diatonic three-chord progressions)
@@ -214,7 +218,9 @@ discrete "box" position shapes (the whole-neck view plus fret window covers them
 per-string 3-note pattern drills (playback runs the full window). In the arpeggio page:
 named inversions and per-pattern practice (chord tones are derived from the diagram,
 so voicings follow the standard fingering shown). In the keys page: sevenths per key
-(triads only) and harmonic/melodic minor (natural minor only).
+(triads only) and harmonic/melodic minor (natural minor only). On the circle: flat-side
+enharmonic labels (Db/Ab/Eb — sharp spellings are used to match the rest of the app) and
+a drag-to-pan or zoomable view.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

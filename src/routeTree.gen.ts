@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArpeggiosRouteImport } from './routes/arpeggios'
 import { Route as ChordsRouteImport } from './routes/chords'
+import { Route as CircleRouteImport } from './routes/circle'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as KeysRouteImport } from './routes/keys'
@@ -46,6 +47,11 @@ const ArpeggiosRoute = ArpeggiosRouteImport.update({
 const ChordsRoute = ChordsRouteImport.update({
   id: '/chords',
   path: '/chords',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CircleRoute = CircleRouteImport.update({
+  id: '/circle',
+  path: '/circle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataRoute = DataRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
+  '/circle': typeof CircleRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
+  '/circle': typeof CircleRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/arpeggios': typeof ArpeggiosRoute
   '/chords': typeof ChordsRoute
+  '/circle': typeof CircleRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arpeggios'
     | '/chords'
+    | '/circle'
     | '/data'
     | '/history'
     | '/keys'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arpeggios'
     | '/chords'
+    | '/circle'
     | '/data'
     | '/history'
     | '/keys'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arpeggios'
     | '/chords'
+    | '/circle'
     | '/data'
     | '/history'
     | '/keys'
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArpeggiosRoute: typeof ArpeggiosRoute
   ChordsRoute: typeof ChordsRoute
+  CircleRoute: typeof CircleRoute
   DataRoute: typeof DataRoute
   HistoryRoute: typeof HistoryRoute
   KeysRoute: typeof KeysRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/chords'
       fullPath: '/chords'
       preLoaderRoute: typeof ChordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/circle': {
+      id: '/circle'
+      path: '/circle'
+      fullPath: '/circle'
+      preLoaderRoute: typeof CircleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data': {
@@ -499,6 +519,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArpeggiosRoute: ArpeggiosRoute,
   ChordsRoute: ChordsRoute,
+  CircleRoute: CircleRoute,
   DataRoute: DataRoute,
   HistoryRoute: HistoryRoute,
   KeysRoute: KeysRoute,

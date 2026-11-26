@@ -45,6 +45,19 @@ export function relativeMinor(rootPc: RootPc): RootPc {
   return (rootPc + 9) % 12
 }
 
+export interface CircleEntry {
+  majorPc: RootPc
+  minorPc: RootPc
+}
+
+/** The twelve circle-of-fifths positions, clockwise from C. */
+export function circleOfFifths(): CircleEntry[] {
+  return Array.from({ length: 12 }, (_, index) => {
+    const majorPc = (index * 7) % 12 // ascending fifths
+    return { majorPc, minorPc: relativeMinor(majorPc) }
+  })
+}
+
 // --- Note spelling ------------------------------------------------------------------
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const

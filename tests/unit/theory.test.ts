@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   CHORD_DIAGRAMS,
+  circleOfFifths,
   chordDiagram,
   chordPcs,
   chordToText,
@@ -38,6 +39,16 @@ describe('key signatures', () => {
     expect(relativeMinor(0)).toBe(9) // C → A
     expect(relativeMinor(6)).toBe(3) // F# → D#
     expect(relativeMinor(5)).toBe(2) // F → D
+  })
+})
+
+describe('circle of fifths', () => {
+  it('walks clockwise from C by ascending fifths, each major paired with its relative minor', () => {
+    const ring = circleOfFifths()
+    expect(ring.map((entry) => entry.majorPc)).toEqual([0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5])
+    for (const entry of ring) {
+      expect(entry.minorPc).toBe((entry.majorPc + 9) % 12)
+    }
   })
 })
 
