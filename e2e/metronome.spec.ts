@@ -43,6 +43,42 @@ test.describe('metronome', () => {
     )
   })
 
+  test('keeps running while you navigate, with a live nav indicator', async ({ page }) => {
+    await page.goto('/metronome')
+
+    // No count-in so the metronome plays immediately.
+    await page.locator('#count-in').selectOption('0')
+    await page.locator('[data-metronome-toggle]').click()
+    await expect(page.locator('[data-metronome-state]')).toHaveAttribute(
+      'data-metronome-state',
+      'playing',
+    )
+
+    // The nav bar shows the live indicator with the current tempo.
+    const indicator = page.locator('[data-metronome-indicator]')
+    await expect(indicator).toBeVisible()
+    await expect(indicator).toHaveText('90 BPM')
+
+    // In-app navigation keeps the click running.
+    await page.getByRole('link', { name: 'Home', exact: true }).click()
+    await expect(page.locator('[data-metronome-indicator]')).toHaveText('90 BPM')
+
+    // The indicator links back to the still-playing metronome.
+    await page.locator('[data-metronome-indicator]').click()
+    await expect(page.locator('[data-metronome-state]')).toHaveAttribute(
+      'data-metronome-state',
+      'playing',
+    )
+
+    // Stopping clears the indicator.
+    await page.locator('[data-metronome-toggle]').click()
+    await expect(page.locator('[data-metronome-state]')).toHaveAttribute(
+      'data-metronome-state',
+      'stopped',
+    )
+    await expect(page.locator('[data-metronome-indicator]')).toHaveCount(0)
+  })
+
   test('saves and deletes a preset', async ({ page }) => {
     await page.goto('/metronome')
 

@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Trash2, Volume2 } from 'lucide-react'
 import type {
-  AccentLevel,
   BeatUnit,
   ClickSound,
   MetronomePreset,
@@ -25,7 +24,6 @@ import {
   calculateTapTempo,
   clampBpm,
   cycleAccent,
-  defaultAccents,
   effectiveClicksPerMinute,
   resizeAccents,
   subdivisionOffsets,
@@ -35,7 +33,7 @@ import { Button } from './ui/button'
 import { Card } from './ui/card'
 import { Field, controlClass } from './ui/field'
 import { BeatDisplay } from './metronome/beat-display'
-import { useMetronome } from './metronome/use-metronome'
+import { useGlobalMetronome } from './metronome/global-metronome'
 
 type PresetStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -51,61 +49,45 @@ export function MetronomePanel({
   onSavePreset: (input: PresetInput) => Promise<void>
   onDeletePreset: (id: number) => Promise<void>
 }) {
-  const [bpm, setBpm] = useState(90)
-  const [beats, setBeats] = useState(4)
-  const [beatUnit, setBeatUnit] = useState<BeatUnit>(4)
-  const [subdivision, setSubdivision] = useState<Subdivision>('none')
-  const [accents, setAccents] = useState<AccentLevel[]>(() => defaultAccents(4))
-  const [countInBars, setCountInBars] = useState(1)
-  const [gapClick, setGapClick] = useState(false)
-  const [sound, setSound] = useState<ClickSound>('woodblock')
-  const [haptics, setHaptics] = useState(false)
-  const [volumeDominant, setVolumeDominant] = useState(90)
-  const [volumeAccent, setVolumeAccent] = useState(60)
-  const [volumeNormal, setVolumeNormal] = useState(45)
-  const [volumeSubdivision, setVolumeSubdivision] = useState(30)
+  // All metronome state lives in the app-wide provider so the click keeps
+  // running while you navigate (see global-metronome.tsx).
+  const {
+    bpm,
+    setBpm,
+    beats,
+    setBeats,
+    beatUnit,
+    setBeatUnit,
+    subdivision,
+    setSubdivision,
+    accents,
+    setAccents,
+    countInBars,
+    setCountInBars,
+    gapClick,
+    setGapClick,
+    sound,
+    setSound,
+    haptics,
+    setHaptics,
+    volumeDominant,
+    setVolumeDominant,
+    volumeAccent,
+    setVolumeAccent,
+    volumeNormal,
+    setVolumeNormal,
+    volumeSubdivision,
+    setVolumeSubdivision,
+    isPlaying,
+    start,
+    stop,
+    getVisual,
+  } = useGlobalMetronome()
 
   const [presetName, setPresetName] = useState('')
   const [presetStatus, setPresetStatus] = useState<PresetStatus>('idle')
 
   const tapsRef = useRef<number[]>([])
-
-  const settings = useMemo(
-    () => ({
-      bpm,
-      beats,
-      beatUnit,
-      subdivision,
-      accents,
-      countInBars,
-      gapClick,
-      sound,
-      haptics,
-      volumes: {
-        dominant: volumeDominant / 100,
-        accent: volumeAccent / 100,
-        normal: volumeNormal / 100,
-        subdivision: volumeSubdivision / 100,
-      },
-    }),
-    [
-      bpm,
-      beats,
-      beatUnit,
-      subdivision,
-      accents,
-      countInBars,
-      gapClick,
-      sound,
-      haptics,
-      volumeDominant,
-      volumeAccent,
-      volumeNormal,
-      volumeSubdivision,
-    ],
-  )
-
-  const { isPlaying, start, stop, getVisual } = useMetronome(settings)
 
   function handleTap() {
     const now = performance.now()
@@ -132,7 +114,7 @@ export function MetronomePanel({
       offTap()
       offSlower()
     }
-  }, [])
+  }, [setBpm])
 
   function handleBeatsChange(raw: number) {
     const next = Math.min(16, Math.max(1, Math.round(Number.isFinite(raw) ? raw : 4)))

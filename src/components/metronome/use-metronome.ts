@@ -255,5 +255,8 @@ export function useMetronome(settings: MetronomeSettings) {
     }
   }, [])
 
-  return { isPlaying, start, stop, getVisual: () => visualRef.current }
+  // Stable identity: consumers may poll it in effects without re-subscribing.
+  const getVisual = useCallback(() => visualRef.current, [])
+
+  return { isPlaying, start, stop, getVisual }
 }

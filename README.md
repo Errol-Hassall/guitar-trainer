@@ -14,6 +14,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Subdivisions: none, 8ths, 16ths, triplets, swing 8ths — with a live clicks/min readout
 - Four click sounds, per-level volumes, count-in (0–2 bars), gap click (mute every other bar), optional haptics
 - Tap tempo, and saved presets (built-ins are read-only)
+- Global and persistent: the click keeps running while you navigate anywhere in the app, and the nav bar shows a live "N BPM" indicator that links back to it
 
 **Practice sessions**
 

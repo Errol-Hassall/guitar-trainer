@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–6 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–7 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -41,9 +41,8 @@ top of `theory.ts`.
 
 ## Practice
 
-7. **Global persistent metronome** — their metronome keeps running while you navigate;
-   the nav bar shows a live "running at N BPM" indicator. → Ours is per-page
-   (`/metronome` and the session page); leaving the page stops it.
+7. ✅ **Global persistent metronome** — state lifted to a root provider; the click keeps
+   running through navigation and the nav bar shows a live "N BPM" indicator linking back.
 8. **Metronome extras** — stop-after-N-bars ("N rounds = N×Y bars, then stops itself")
    and named rhythm patterns: gallop, shuffle, waltz (strong-weak-weak), and rest beats
    ("count but don't play"). → We have count-in, gap click and subdivisions, but no

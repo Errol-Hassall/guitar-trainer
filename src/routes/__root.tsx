@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import { Guitar } from 'lucide-react'
 import { APP_NAME } from '#/lib/types'
+import { MetronomeProvider, useGlobalMetronome } from '#/components/metronome/global-metronome'
 import '../styles.css'
 
 export const Route = createRootRoute({
@@ -56,6 +57,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body>
+        <MetronomeProvider>
         <header className="border-b border-line bg-surface/80">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
             <Link to="/" className="flex min-h-11 items-center gap-2 font-semibold">
@@ -96,10 +98,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   {item.label}
                 </Link>
               ))}
+              <MetronomeIndicator />
             </nav>
           </div>
         </header>
         {children}
+        </MetronomeProvider>
         <Scripts />
         {import.meta.env.PROD ? (
           <script
@@ -110,5 +114,21 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         ) : null}
       </body>
     </html>
+  )
+}
+
+/** Live "running at N BPM" chip; only visible while the global metronome plays. */
+function MetronomeIndicator() {
+  const { isPlaying, bpm } = useGlobalMetronome()
+  if (!isPlaying) return null
+  return (
+    <Link
+      to="/metronome"
+      data-metronome-indicator="true"
+      className="flex min-h-11 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-accent-ink"
+    >
+      <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-accent-ink" />
+      {bpm} BPM
+    </Link>
   )
 }
