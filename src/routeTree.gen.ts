@@ -16,6 +16,7 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as MetronomeRouteImport } from './routes/metronome'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RecordingsRouteImport } from './routes/recordings'
+import { Route as ScalesRouteImport } from './routes/scales'
 import { Route as TracksRouteImport } from './routes/tracks'
 import { Route as TunerRouteImport } from './routes/tuner'
 import { Route as EarIndexRouteImport } from './routes/ear/index'
@@ -63,6 +64,11 @@ const ProgressRoute = ProgressRouteImport.update({
 const RecordingsRoute = RecordingsRouteImport.update({
   id: '/recordings',
   path: '/recordings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScalesRoute = ScalesRouteImport.update({
+  id: '/scales',
+  path: '/scales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TracksRoute = TracksRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
+  '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
+  '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
+  '/scales': typeof ScalesRoute
   '/tracks': typeof TracksRoute
   '/tuner': typeof TunerRoute
   '/ear/$drill': typeof EarDrillRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/metronome'
     | '/progress'
     | '/recordings'
+    | '/scales'
     | '/tracks'
     | '/tuner'
     | '/ear/$drill'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/metronome'
     | '/progress'
     | '/recordings'
+    | '/scales'
     | '/tracks'
     | '/tuner'
     | '/ear/$drill'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/metronome'
     | '/progress'
     | '/recordings'
+    | '/scales'
     | '/tracks'
     | '/tuner'
     | '/ear/$drill'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   MetronomeRoute: typeof MetronomeRoute
   ProgressRoute: typeof ProgressRoute
   RecordingsRoute: typeof RecordingsRoute
+  ScalesRoute: typeof ScalesRoute
   TracksRoute: typeof TracksRoute
   TunerRoute: typeof TunerRoute
   EarDrillRoute: typeof EarDrillRoute
@@ -339,6 +352,13 @@ declare module '@tanstack/react-router' {
       path: '/recordings'
       fullPath: '/recordings'
       preLoaderRoute: typeof RecordingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scales': {
+      id: '/scales'
+      path: '/scales'
+      fullPath: '/scales'
+      preLoaderRoute: typeof ScalesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tracks': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   MetronomeRoute: MetronomeRoute,
   ProgressRoute: ProgressRoute,
   RecordingsRoute: RecordingsRoute,
+  ScalesRoute: ScalesRoute,
   TracksRoute: TracksRoute,
   TunerRoute: TunerRoute,
   EarDrillRoute: EarDrillRoute,

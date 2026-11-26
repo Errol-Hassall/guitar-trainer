@@ -3,7 +3,7 @@
  * chord diagrams. No I/O — the UI renders what these functions return.
  */
 
-import { MAJOR_SCALE } from './ear'
+import { MAJOR_SCALE, midiName } from './ear'
 
 /** Pitch class 0–11, sharp spelling (matches `NOTE_NAMES`). */
 export type RootPc = number
@@ -56,17 +56,23 @@ const ROOT_LETTER: Record<number, number> = {
 }
 
 /**
- * Correctly spelled note names of a major scale (F# major ends in E#, not F).
+ * Correctly spelled note names of a seven-note diatonic scale: one note per
+ * letter, so F# major ends in E#, not F.
  */
-export function majorScaleNames(rootPc: RootPc): string[] {
+function diatonicNames(rootPc: RootPc, intervals: readonly number[]): string[] {
   const startLetter = ROOT_LETTER[rootPc]
-  return MAJOR_SCALE.map((offset, degree) => {
+  return intervals.map((offset, degree) => {
     const letter = (startLetter + degree) % 7
     let accidental = (rootPc + offset) % 12 - LETTER_PC[letter]
     if (accidental < -5 || accidental > 6) accidental += 12 // e.g. B# = pc 0 on letter B
     const marks = accidental > 0 ? '#'.repeat(accidental) : 'b'.repeat(-accidental)
     return LETTERS[letter] + marks
   })
+}
+
+/** Correctly spelled note names of a major scale (F# major ends in E#, not F). */
+export function majorScaleNames(rootPc: RootPc): string[] {
+  return diatonicNames(rootPc, MAJOR_SCALE)
 }
 
 // --- Diatonic chords ----------------------------------------------------------------
@@ -108,6 +114,104 @@ export function diatonicChords(rootPc: RootPc, kind: 'triad' | 'seventh'): Diato
     quality: entry.quality,
     semitones: [...entry.semitones],
   }))
+}
+
+// --- Scales ---------------------------------------------------------------------------
+
+export interface ScaleType {
+  id: string
+  name: string
+  intervals: number[]
+}
+
+export const SCALE_TYPES: readonly ScaleType[] = [
+  { id: 'major', name: 'Major', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: 'natural-minor', name: 'Natural minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { id: 'major-pentatonic', name: 'Major pentatonic', intervals: [0, 2, 4, 7, 9] },
+  { id: 'minor-pentatonic', name: 'Minor pentatonic', intervals: [0, 3, 5, 7, 10] },
+  { id: 'blues', name: 'Blues', intervals: [0, 3, 5, 6, 7, 10] },
+  { id: 'bebop-dominant', name: 'Bebop dominant', intervals: [0, 2, 4, 5, 7, 9, 10, 11] },
+] as const
+
+export function scaleTypeById(id: string): ScaleType | undefined {
+  return SCALE_TYPES.find((type) => type.id === id)
+}
+
+/** The pitch classes a scale contains (unique, in interval order). */
+export function scalePcs(rootPc: RootPc, type: ScaleType): number[] {
+  const seen = new Set<number>()
+  const pcs: number[] = []
+  for (const offset of type.intervals) {
+    const pc = (rootPc + offset) % 12
+    if (!seen.has(pc)) {
+      seen.add(pc)
+      pcs.push(pc)
+    }
+  }
+  return pcs
+}
+
+/**
+ * Spell a scale's notes: diatonic scales (major, natural minor) use one note
+ * per letter; the rest take the fewest-accidental spelling, with ties
+ * following the root's accidental family (C blues = Gb/Bb, D# blues = F#/A#).
+ */
+export function scaleNoteNames(rootPc: RootPc, type: ScaleType): string[] {
+  if (type.intervals.length === 7) return diatonicNames(rootPc, [...type.intervals])
+  const preferSharp = rootPc - LETTER_PC[ROOT_LETTER[rootPc]] > 0
+  return type.intervals.map((offset) => {
+    const pc = (rootPc + offset) % 12
+    let best: { acc: number; name: string } | undefined
+    for (let letter = 0; letter < 7; letter += 1) {
+      let acc = ((pc - LETTER_PC[letter]) % 12 + 12) % 12
+      if (acc > 6) acc -= 12
+      if (Math.abs(acc) > 2) continue
+      const name = LETTERS[letter] + (acc > 0 ? '#'.repeat(acc) : 'b'.repeat(-acc))
+      if (!best) {
+        best = { acc, name }
+        continue
+      }
+      const byAcc = Math.abs(acc) - Math.abs(best.acc)
+      // On an accidental-count tie, the root's family wins: preferSharp=true
+      // replaces a flat with a sharp, false replaces a sharp with a flat.
+      const newSharp = acc >= 0 ? 1 : 0
+      const bestSharp = best.acc >= 0 ? 1 : 0
+      const family = preferSharp ? newSharp - bestSharp : bestSharp - newSharp
+      if (byAcc < 0 || (byAcc === 0 && family > 0)) best = { acc, name }
+    }
+    return best!.name
+  })
+}
+
+/** Open-string pitch classes, low E → high e. */
+export const OPEN_STRINGS = [4, 9, 2, 7, 11, 5] as const
+
+export interface NeckNote {
+  /** 0 = low E … 5 = high e. */
+  stringIndex: number
+  fret: number
+  midi: number
+  name: string
+}
+
+/** Every scale note on the neck (frets 0–`maxFret`), low to high. */
+export function neckNotes(rootPc: RootPc, type: ScaleType, maxFret = 12): NeckNote[] {
+  const pcs = new Set(scalePcs(rootPc, type))
+  const notes: NeckNote[] = []
+  for (let stringIndex = 0; stringIndex < 6; stringIndex += 1) {
+    for (let fret = 0; fret <= maxFret; fret += 1) {
+      if (pcs.has((OPEN_STRINGS[stringIndex] + fret) % 12)) {
+        const midi = 40 + stringIndex * 5 + fret // low E2 = MIDI 40
+        notes.push({ stringIndex, fret, midi, name: midiName(midi) })
+      }
+    }
+  }
+  return notes.sort((a, b) => a.midi - b.midi || a.stringIndex - b.stringIndex)
+}
+
+/** The scale notes inside a fret window (inclusive), ready to play in order. */
+export function windowNotes(neck: NeckNote[], fromFret: number, toFret: number): NeckNote[] {
+  return neck.filter((note) => note.fret >= fromFret && note.fret <= toFret)
 }
 
 // --- Chord diagrams -----------------------------------------------------------------

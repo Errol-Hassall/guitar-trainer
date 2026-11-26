@@ -5,7 +5,12 @@ import {
   chordToText,
   diatonicChords,
   keySignature,
+  neckNotes,
   relativeMinor,
+  scaleNoteNames,
+  scalePcs,
+  scaleTypeById,
+  windowNotes,
 } from '#/lib/theory'
 
 describe('key signatures', () => {
@@ -49,6 +54,66 @@ describe('diatonic chords', () => {
   it('transposes correctly for a sharp key', () => {
     const chords = diatonicChords(6, 'triad') // F# major
     expect(chords.map((c) => c.name)).toEqual(['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#'])
+  })
+})
+
+describe('scales', () => {
+  it('collects the pitch classes of a scale without duplicates', () => {
+    expect(scalePcs(0, scaleTypeById('major')!)).toEqual([0, 2, 4, 5, 7, 9, 11])
+    // Blues has six distinct notes.
+    expect(scalePcs(0, scaleTypeById('blues')!)).toHaveLength(6)
+  })
+
+  it('spells scales with the right letters and accidental family', () => {
+    const byId = (id: string) => scaleNoteNames(0, scaleTypeById(id)!)
+    expect(byId('major')).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B'])
+    expect(scaleNoteNames(0, scaleTypeById('blues')!)).toEqual(['C', 'Eb', 'F', 'Gb', 'G', 'Bb'])
+    // Sharp-named roots keep the sharp family.
+    expect(scaleNoteNames(1, scaleTypeById('minor-pentatonic')!)).toEqual([
+      'C#',
+      'E',
+      'F#',
+      'G#',
+      'B',
+    ])
+    // Sharp-named roots spell the whole scale in sharps (A# minor pentatonic).
+    expect(scaleNoteNames(10, scaleTypeById('minor-pentatonic')!)).toEqual([
+      'A#',
+      'C#',
+      'D#',
+      'F',
+      'G#',
+    ])
+    // Diatonic majors stay consecutive letters even into E#/B# territory.
+    expect(scaleNoteNames(7, scaleTypeById('major')!)).toEqual([
+      'G',
+      'A',
+      'B',
+      'C',
+      'D',
+      'E',
+      'F#',
+    ])
+  })
+
+  it('lists every scale note on the neck, low to high', () => {
+    const cMajor = neckNotes(0, scaleTypeById('major')!, 7)
+    // Low E string: open E, F1, G3, A5, B7.
+    const lowE = cMajor.filter((note) => note.stringIndex === 0)
+    expect(lowE.map((note) => note.fret)).toEqual([0, 1, 3, 5, 7])
+    expect(cMajor[0].midi).toBe(40) // open low E2
+    expect(cMajor.every((note, i) => i === 0 || note.midi >= cMajor[i - 1].midi)).toBe(true)
+  })
+
+  it('filters the neck to a fret window with inclusive boundaries', () => {
+    const cMajor = neckNotes(0, scaleTypeById('major')!, 12)
+    // Exactly fret 3: low E, A, D and B strings hold scale notes.
+    expect(windowNotes(cMajor, 3, 3)).toHaveLength(4)
+    // The default practice window of C major (frets 1–7) holds 24 notes.
+    expect(windowNotes(cMajor, 1, 7)).toHaveLength(24)
+    // G minor pentatonic in the same window holds 17.
+    const gMinorPent = neckNotes(7, scaleTypeById('minor-pentatonic')!, 12)
+    expect(windowNotes(gMinorPent, 1, 7)).toHaveLength(17)
   })
 })
 
