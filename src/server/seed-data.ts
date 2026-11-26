@@ -245,6 +245,36 @@ export const DEFAULT_PATHS: SeedPath[] = [
       },
     ],
   },
+  {
+    slug: 'blues-path',
+    name: 'Blues Path',
+    description: 'From the minor pentatonic box to full 12-bar phrasing.',
+    theme: 'Expression & Progressions',
+    steps: [
+      {
+        title: 'Minor Pentatonic Box',
+        description:
+          'Learn A minor pentatonic across all six strings in Scales and play it slowly with the click until every note is clean.',
+      },
+      {
+        title: 'Blue Notes',
+        description:
+          "Add the b5 (the \"devil's note\") from the Blues scale in Scales. Bend into it over the I chord and release before it resolves.",
+      },
+      {
+        title: '12-Bar Changes',
+        description:
+          'In A, the 12-bar form is A7–D7–E7 (see Chords). Strum the changes twice through at a slow tempo, then improvise over them with your box.',
+        externalUrl:
+          'https://www.youtube.com/results?search_query=12+bar+blues+changes+guitar+beginner',
+      },
+      {
+        title: 'Blues Phrasing',
+        description:
+          'Generate a phrase in LickLab (A, minor pentatonic or Blues scale, blues style) and learn it note by note. Add slides and vibrato until it sounds like call-and-response.',
+      },
+    ],
+  },
 ]
 
 export function seedDatabase(db: DatabaseSync): void {

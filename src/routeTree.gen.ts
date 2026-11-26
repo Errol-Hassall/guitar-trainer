@@ -14,6 +14,7 @@ import { Route as ArpeggiosRouteImport } from './routes/arpeggios'
 import { Route as ChordsRouteImport } from './routes/chords'
 import { Route as CircleRouteImport } from './routes/circle'
 import { Route as DataRouteImport } from './routes/data'
+import { Route as GenresRouteImport } from './routes/genres'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as KeysRouteImport } from './routes/keys'
 import { Route as LicklabRouteImport } from './routes/licklab'
@@ -60,6 +61,11 @@ const CircleRoute = CircleRouteImport.update({
 const DataRoute = DataRouteImport.update({
   id: '/data',
   path: '/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GenresRoute = GenresRouteImport.update({
+  id: '/genres',
+  path: '/genres',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/chords': typeof ChordsRoute
   '/circle': typeof CircleRoute
   '/data': typeof DataRoute
+  '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/chords': typeof ChordsRoute
   '/circle': typeof CircleRoute
   '/data': typeof DataRoute
+  '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/chords': typeof ChordsRoute
   '/circle': typeof CircleRoute
   '/data': typeof DataRoute
+  '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/circle'
     | '/data'
+    | '/genres'
     | '/history'
     | '/keys'
     | '/licklab'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/circle'
     | '/data'
+    | '/genres'
     | '/history'
     | '/keys'
     | '/licklab'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/circle'
     | '/data'
+    | '/genres'
     | '/history'
     | '/keys'
     | '/licklab'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   ChordsRoute: typeof ChordsRoute
   CircleRoute: typeof CircleRoute
   DataRoute: typeof DataRoute
+  GenresRoute: typeof GenresRoute
   HistoryRoute: typeof HistoryRoute
   KeysRoute: typeof KeysRoute
   LicklabRoute: typeof LicklabRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/data'
       fullPath: '/data'
       preLoaderRoute: typeof DataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/genres': {
+      id: '/genres'
+      path: '/genres'
+      fullPath: '/genres'
+      preLoaderRoute: typeof GenresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -581,6 +601,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChordsRoute: ChordsRoute,
   CircleRoute: CircleRoute,
   DataRoute: DataRoute,
+  GenresRoute: GenresRoute,
   HistoryRoute: HistoryRoute,
   KeysRoute: KeysRoute,
   LicklabRoute: LicklabRoute,

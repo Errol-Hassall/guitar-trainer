@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10, 12 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12–13 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -65,9 +65,9 @@ top of `theory.ts`.
 
 ## Paths & games
 
-13. **Genre-specific paths** *(partial)* — a blues path and a genres overview page
-    ("scales of this genre"). → We have four technique-themed paths (clean foundations,
-    alternate picking, legato/groove, accuracy/transcription); none is genre-organised.
+13. ✅ **Genre-specific paths** — seeded *Blues Path* (pentatonic box → blue notes →
+    12-bar changes → phrasing, theme "Expression & Progressions") and a static `/genres`
+    page: curated scales per genre plus the modes tagged for it (derived from MODES).
 14. **Gamified drill structure** *(partial)* — drills as levels with best-score-per-level,
     consecutive-correct streaks and average time per question. → Our four ear drills keep
     cumulative attempts/correct per drill+level only; no levels, best scores or timing.

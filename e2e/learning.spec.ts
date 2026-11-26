@@ -36,6 +36,23 @@ test.describe('learning paths', () => {
     ).toBeVisible()
   })
 
+  test('seeds the genre-organised Blues Path', async ({ page }) => {
+    await page.goto('/learning')
+
+    const bluesCard = page.locator('section', { hasText: 'Blues Path' })
+    await expect(bluesCard).toBeVisible()
+    await expect(bluesCard.getByText('Expression & Progressions')).toBeVisible()
+
+    await bluesCard.getByRole('button', { name: 'Open' }).click()
+    await expect(page).toHaveURL(/\/learning\/\d+/)
+    await expect(
+      page.locator('section', { hasText: 'Step 1: Minor Pentatonic Box' }),
+    ).toBeVisible()
+    await expect(
+      page.locator('section', { hasText: 'Step 4: Blues Phrasing' }).getByText('Locked'),
+    ).toBeVisible()
+  })
+
   test('rejects un-completing a step that completed steps depend on', async ({ page }) => {
     await page.goto('/learning')
     const pickingCard = page.locator('section', { hasText: 'Alternate Picking 101 → 301' })

@@ -41,7 +41,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 
 **Learning paths**
 
-- Four curated built-in paths mirroring the weekly rotation themes (*Clean Foundations*, *Alternate Picking 101 → 301*, *Legato & Groove*, *Accuracy & Transcription*), each an ordered chain of steps with prerequisites
+- Five curated built-in paths: four mirroring the weekly rotation themes (*Clean Foundations*, *Alternate Picking 101 → 301*, *Legato & Groove*, *Accuracy & Transcription*) plus the genre-organised *Blues Path* (pentatonic box → blue notes → 12-bar changes → phrasing), each an ordered chain of steps with prerequisites
 - Skill-tree view: each step is locked until its prerequisite is complete; completing a step unlocks the next, and clearing a step that completed steps depend on is rejected
 - Steps link out to external resources (YouTube searches / books) and to in-app drills where one fits
 
@@ -72,6 +72,10 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 
 - All seven diatonic modes with a colour swatch, one-line character, and the genres they live in
 - Correctly spelled notes for any root plus the parent major key that shares the mode's notes (E Dorian = D major), on the same fretboard with practice-window playback as the scale library
+
+**Genres**
+
+- Overview of which scales and modes fit each genre (blues, jazz, rock, country, flamenco) — scales are curated per genre, modes are derived from the mode list's genre tags; a starting point, not a rule
 
 **Ear training**
 
@@ -247,7 +251,9 @@ trainer: automatic tempo adjustment (the advice tells you which way to turn, you
 and a per-hit timeline view. In LickLab: call-and-response A/B phrasing (one phrase at a
 time), finger-order annotations (technique labels only) and AI-assisted generation
 (deterministic local generation instead, per the no-LLM decision); licks are not saved —
-the seed reproduces them.
+the seed reproduces them. In the blues path and genres page: only five genres are listed
+(no per-genre drill content), the genres page links to the libraries without pre-selecting
+a scale (they take no query params), and blues is the only genre with its own path.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
