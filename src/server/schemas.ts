@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EAR_DRILL_IDS } from '#/lib/ear'
+import { EAR_DRILL_IDS, INTERVAL_NAMES } from '#/lib/ear'
 import { MOODS, SESSION_KINDS, SUBDIVISIONS, THEMES } from '#/lib/types'
 
 export const idSchema = z.number().int().positive()
@@ -172,6 +172,15 @@ export const logEarRoundSchema = z
     message: 'Correct answers cannot exceed the total',
     path: ['correct'],
   })
+
+export const saveIntervalNoteSchema = z.object({
+  name: z.enum(INTERVAL_NAMES),
+  note: z.string().max(200),
+})
+
+export const intervalNameSchema = z.object({
+  name: z.enum(INTERVAL_NAMES),
+})
 
 // --- Rhythm trainer ---------------------------------------------------------------
 

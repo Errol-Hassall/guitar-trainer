@@ -23,6 +23,10 @@ export function midiName(midi: number): string {
   return `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`
 }
 
+// Used only inside question generators below, so the ear ↔ theory import cycle
+// never touches bindings while either module is still evaluating.
+import { keySignature, OPEN_STRINGS } from './theory'
+
 export function midiFrequency(midi: number): number {
   return 440 * 2 ** ((midi - 69) / 12)
 }
@@ -49,6 +53,11 @@ export const EAR_DRILLS = [
     id: 'progressions',
     name: 'Progressions',
     description: 'Three chords in a key. Which progression is it?',
+  },
+  {
+    id: 'theory',
+    name: 'Theory quiz',
+    description: 'No audio: fretboard notes, key signatures and interval sizes.',
   },
   {
     id: 'transcription',
@@ -79,6 +88,13 @@ export const INTERVALS = [
   { semitones: 11, name: 'Major 7th' },
   { semitones: 12, name: 'Octave' },
 ] as const
+
+export type IntervalName = (typeof INTERVALS)[number]['name']
+
+/** Literal-typed so `z.enum` keeps the union in inferred server-fn inputs. */
+export const INTERVAL_NAMES = INTERVALS.map(
+  (interval) => interval.name,
+) as readonly IntervalName[]
 
 /** Major scale, in semitones from the tonic. */
 export const MAJOR_SCALE = [0, 2, 4, 5, 7, 9, 11] as const
@@ -121,8 +137,10 @@ export interface EarQuestion {
   /** Shuffled answer labels; `answerIndex` points at the right one. */
   options: string[]
   answerIndex: number
-  /** MIDI numbers to play, in order. */
+  /** MIDI numbers to play, in order (empty for text-only questions). */
   notes: number[]
+  /** Question text for drills without audio; rendered instead of the Play button. */
+  prompt?: string
 }
 
 function pick<T>(items: readonly T[], random: () => number): T {
@@ -206,6 +224,60 @@ function makeProgressionQuestion(random: () => number): EarQuestion {
   }
 }
 
+/** The answer plus three distinct distractors from the pool, shuffled. */
+function optionsWith<T>(answer: T, pool: readonly T[], random: () => number) {
+  const distractors = shuffled(
+    [...pool].filter((item) => item !== answer),
+    random,
+  ).slice(0, 3)
+  const options = shuffled([answer, ...distractors], random)
+  return { options, answerIndex: options.indexOf(answer) }
+}
+
+function makeFretNoteQuestion(random: () => number): EarQuestion {
+  const stringIndex = Math.floor(random() * OPEN_STRINGS.length)
+  const fret = 1 + Math.floor(random() * 12) // frets 1–12, standard tuning
+  const answer = NOTE_NAMES[(OPEN_STRINGS[stringIndex] + fret) % 12]
+  const { options, answerIndex } = optionsWith(answer, NOTE_NAMES, random)
+  return {
+    drill: 'theory',
+    level: 1,
+    options,
+    answerIndex,
+    notes: [],
+    prompt: `Which note is on string ${stringIndex + 1}, fret ${fret}?`,
+  }
+}
+
+function makeKeySignatureQuestion(random: () => number): EarQuestion {
+  const root = Math.floor(random() * 12)
+  const signature = keySignature(root)
+  const answer = signature.sharps.length + signature.flats.length
+  const { options, answerIndex } = optionsWith(answer, [0, 1, 2, 3, 4, 5, 6, 7], random)
+  return {
+    drill: 'theory',
+    level: 1,
+    options: options.map(String),
+    answerIndex,
+    notes: [],
+    prompt: `How many sharps or flats are in the key signature of ${NOTE_NAMES[root]} major?`,
+  }
+}
+
+function makeIntervalSizeQuestion(random: () => number): EarQuestion {
+  const interval = pick(INTERVALS, random)
+  const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  const { options, answerIndex } = optionsWith(interval.semitones, pool, random)
+  return {
+    drill: 'theory',
+    level: 1,
+    options: options.map(String),
+    answerIndex,
+    notes: [],
+    prompt: `How many semitones are in a ${interval.name}?`,
+  }
+}
+
 export function makeQuestion(
   drill: EarDrillId,
   level = 1,
@@ -220,6 +292,11 @@ export function makeQuestion(
       return makeChordQualityQuestion(level === 2 ? 2 : 1, random)
     case 'progressions':
       return makeProgressionQuestion(random)
+    case 'theory':
+      return pick(
+        [makeFretNoteQuestion, makeKeySignatureQuestion, makeIntervalSizeQuestion],
+        random,
+      )(random)
     default:
       throw new Error(`No quiz questions for drill "${drill}"`)
   }

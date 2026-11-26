@@ -9,6 +9,7 @@ import type {
   ExerciseInput,
   ExerciseProgress,
   ExerciseSummary,
+  IntervalNote,
   LearningPathDetail,
   LearningPathSummary,
   LogProgressInput,
@@ -919,6 +920,34 @@ export function logEarRound(input: {
     input.totalResponseMs,
     nowIso(),
   )
+}
+
+interface IntervalNoteRow {
+  name: string
+  note: string
+  updated_at: string
+}
+
+export function listIntervalNotes(): IntervalNote[] {
+  const rows = db.prepare('SELECT * FROM interval_notes ORDER BY updated_at DESC').all() as unknown as IntervalNoteRow[]
+  return rows.map((row) => ({
+    name: row.name,
+    note: row.note,
+    updatedAt: row.updated_at,
+  }))
+}
+
+export function saveIntervalNote(input: { name: string; note: string }): void {
+  db.prepare(
+    `INSERT INTO interval_notes (name, note, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT (name) DO UPDATE SET
+       note = excluded.note,
+       updated_at = excluded.updated_at`,
+  ).run(input.name, input.note, nowIso())
+}
+
+export function removeIntervalNote(name: string): void {
+  db.prepare('DELETE FROM interval_notes WHERE name = ?').run(name)
 }
 
 interface RhythmRunRow {

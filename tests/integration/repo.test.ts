@@ -20,6 +20,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   db.exec('DELETE FROM ear_stats')
+  db.exec('DELETE FROM interval_notes')
   db.exec('DELETE FROM path_step_state')
   db.exec('DELETE FROM path_steps')
   db.exec('DELETE FROM learning_paths')
@@ -768,5 +769,24 @@ describe('ear stats', () => {
     expect(sevenths.attempts).toBe(10)
     expect(sevenths.bestStreak).toBe(2)
     expect(sevenths.totalResponseMs).toBe(9000)
+  })
+})
+
+describe('interval notebook', () => {
+  it('starts empty and keeps one note per interval', () => {
+    expect(repo.listIntervalNotes()).toEqual([])
+
+    repo.saveIntervalNote({ name: 'Perfect 5th', note: 'Solid' })
+    repo.saveIntervalNote({ name: 'Tritone', note: 'Spooky' })
+    // Upsert: the second save replaces the first note for the same interval.
+    repo.saveIntervalNote({ name: 'Perfect 5th', note: 'Very solid' })
+
+    const notes = repo.listIntervalNotes()
+    expect(notes).toHaveLength(2)
+    const fifth = notes.find((item) => item.name === 'Perfect 5th')!
+    expect(fifth.note).toBe('Very solid')
+
+    repo.removeIntervalNote('Tritone')
+    expect(repo.listIntervalNotes()).toEqual([fifth])
   })
 })

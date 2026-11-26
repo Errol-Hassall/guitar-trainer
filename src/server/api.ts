@@ -17,6 +17,7 @@ import {
   exerciseIdSchema,
   importExercisesSchema,
   importTemplatesSchema,
+  intervalNameSchema,
   learningPathIdSchema,
   listRecordingsSchema,
   listRhythmRunsSchema,
@@ -29,6 +30,7 @@ import {
   recentReviewsSchema,
   restoreBackupSchema,
   restDaySchema,
+  saveIntervalNoteSchema,
   savePresetSchema,
   saveSectionNotesSchema,
   saveWeeklyReviewSchema,
@@ -258,6 +260,26 @@ export const logEarRound = createServerFn({ method: 'POST' })
   .validator(logEarRoundSchema)
   .handler(({ data }) => {
     repo.logEarRound(data)
+    return true
+  })
+
+// --- Interval notebook --------------------------------------------------------------
+
+export const listIntervalNotes = createServerFn({ method: 'GET' }).handler(() =>
+  repo.listIntervalNotes(),
+)
+
+export const saveIntervalNote = createServerFn({ method: 'POST' })
+  .validator(saveIntervalNoteSchema)
+  .handler(({ data }) => {
+    repo.saveIntervalNote(data)
+    return true
+  })
+
+export const removeIntervalNote = createServerFn({ method: 'POST' })
+  .validator(intervalNameSchema)
+  .handler(({ data }) => {
+    repo.removeIntervalNote(data.name)
     return true
   })
 

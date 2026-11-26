@@ -3,6 +3,7 @@ import {
   CHORD_QUALITY_LEVELS,
   INTERVALS,
   MAJOR_SCALE,
+  NOTE_NAMES,
   PROGRESSIONS,
   SOLFEGE,
   makePhrase,
@@ -10,6 +11,7 @@ import {
   midiFrequency,
   midiName,
 } from '#/lib/ear'
+import { keySignature, OPEN_STRINGS } from '#/lib/theory'
 
 /** Deterministic RNG so question generation is testable. */
 function mulberry32(seed: number): () => number {
@@ -96,6 +98,47 @@ describe('makeQuestion', () => {
     const keyRoot = question.notes[0] - MAJOR_SCALE[progression.degrees[0] - 1]
     for (let chord = 0; chord < 3; chord += 1) {
       expect(MAJOR_SCALE).toContain(question.notes[chord * 3] - keyRoot)
+    }
+  })
+
+  it('generates text-only theory questions with four distinct options', () => {
+    for (let seed = 1; seed < 20; seed += 1) {
+      const question = makeQuestion('theory', 1, mulberry32(seed))
+      expect(question.notes).toEqual([])
+      expect(question.prompt).toBeTruthy()
+      expect(question.options).toHaveLength(4)
+      expect(new Set(question.options).size).toBe(4)
+      expect(question.answerIndex).toBeGreaterThanOrEqual(0)
+      expect(question.answerIndex).toBeLessThan(4)
+    }
+  })
+
+  it('is deterministic for a given seed (theory)', () => {
+    const a = makeQuestion('theory', 1, mulberry32(42))
+    const b = makeQuestion('theory', 1, mulberry32(42))
+    expect(a).toEqual(b)
+  })
+
+  it('answers every theory question type correctly', () => {
+    for (let seed = 1; seed < 80; seed += 1) {
+      const question = makeQuestion('theory', 1, mulberry32(seed))
+      const prompt = question.prompt!
+      const answer = question.options[question.answerIndex]
+      if (prompt.startsWith('Which note is on string')) {
+        const [, stringNumber, fret] = /string (\d+), fret (\d+)/.exec(prompt)!.map(Number)
+        expect(answer).toBe(NOTE_NAMES[(OPEN_STRINGS[stringNumber - 1] + fret) % 12])
+      } else if (prompt.startsWith('How many sharps or flats')) {
+        const rootName = /of (.+) major\?$/.exec(prompt)![1]
+        const signature = keySignature((NOTE_NAMES as readonly string[]).indexOf(rootName))
+        expect(answer).toBe(String(signature.sharps.length + signature.flats.length))
+      } else if (prompt.startsWith('How many semitones')) {
+        const name = /in a (.+)\?/.exec(prompt)![1]
+        expect(answer).toBe(
+          String(INTERVALS.find((interval) => interval.name === name)!.semitones),
+        )
+      } else {
+        throw new Error(`Unknown theory prompt: ${prompt}`)
+      }
     }
   })
 })

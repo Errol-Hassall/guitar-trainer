@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10, 12–14 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12–15 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -72,10 +72,10 @@ top of `theory.ts`.
     in-round streak of consecutive correct answers and the average time per answer
     (question shown → tap), all shown on the ear-training list; chord quality already
     runs two levels.
-15. **Theory-knowledge questions + interval notebook** *(partial)* — games include
-    non-ear questions (note naming, "which chords live in this key") and a personal
-    "interval notebook" of learned intervals with audio. → Our ear drills cover the
-    listening side well; theory quiz content and a personal interval collection are missing.
+15. ✅ **Theory-knowledge questions + interval notebook** — a text-only *Theory quiz*
+    drill (fretboard note names, major-key signatures, interval sizes) scored like the
+    audio drills, plus `/intervals`: the ten standard intervals with audio and a personal
+    note per interval (add/edit/remove).
 
 ## Tools & meta
 

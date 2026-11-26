@@ -146,11 +146,13 @@ function QuizDrill({ drill, definitionName }: { drill: EarDrillId; definitionNam
           {error}
         </p>
       )}
-      <Card title={`Question ${count}`}>
+      <Card title={question.prompt ?? `Question ${count}`}>
         <div className="flex flex-col gap-4">
-          <Button onClick={() => void play()} data-ear-play>
-            Play
-          </Button>
+          {question.notes.length > 0 && (
+            <Button onClick={() => void play()} data-ear-play>
+              Play
+            </Button>
+          )}
           <div data-ear-options className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {question.options.map((option, index) => (
               <Button

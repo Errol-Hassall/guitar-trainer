@@ -287,6 +287,13 @@ export interface EarStat {
   updatedAt: string
 }
 
+/** One entry in the personal interval notebook. */
+export interface IntervalNote {
+  name: string
+  note: string
+  updatedAt: string
+}
+
 export interface RecordingSummary {
   id: number
   name: string

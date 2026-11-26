@@ -16,6 +16,7 @@ import { Route as CircleRouteImport } from './routes/circle'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as GenresRouteImport } from './routes/genres'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as IntervalsRouteImport } from './routes/intervals'
 import { Route as KeysRouteImport } from './routes/keys'
 import { Route as LicklabRouteImport } from './routes/licklab'
 import { Route as MetronomeRouteImport } from './routes/metronome'
@@ -71,6 +72,11 @@ const GenresRoute = GenresRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntervalsRoute = IntervalsRouteImport.update({
+  id: '/intervals',
+  path: '/intervals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KeysRoute = KeysRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/data': typeof DataRoute
   '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
+  '/intervals': typeof IntervalsRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/data': typeof DataRoute
   '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
+  '/intervals': typeof IntervalsRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/data': typeof DataRoute
   '/genres': typeof GenresRoute
   '/history': typeof HistoryRoute
+  '/intervals': typeof IntervalsRoute
   '/keys': typeof KeysRoute
   '/licklab': typeof LicklabRoute
   '/metronome': typeof MetronomeRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/genres'
     | '/history'
+    | '/intervals'
     | '/keys'
     | '/licklab'
     | '/metronome'
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/genres'
     | '/history'
+    | '/intervals'
     | '/keys'
     | '/licklab'
     | '/metronome'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/data'
     | '/genres'
     | '/history'
+    | '/intervals'
     | '/keys'
     | '/licklab'
     | '/metronome'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   DataRoute: typeof DataRoute
   GenresRoute: typeof GenresRoute
   HistoryRoute: typeof HistoryRoute
+  IntervalsRoute: typeof IntervalsRoute
   KeysRoute: typeof KeysRoute
   LicklabRoute: typeof LicklabRoute
   MetronomeRoute: typeof MetronomeRoute
@@ -443,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/intervals': {
+      id: '/intervals'
+      path: '/intervals'
+      fullPath: '/intervals'
+      preLoaderRoute: typeof IntervalsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/keys': {
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   DataRoute: DataRoute,
   GenresRoute: GenresRoute,
   HistoryRoute: HistoryRoute,
+  IntervalsRoute: IntervalsRoute,
   KeysRoute: KeysRoute,
   LicklabRoute: LicklabRoute,
   MetronomeRoute: MetronomeRoute,

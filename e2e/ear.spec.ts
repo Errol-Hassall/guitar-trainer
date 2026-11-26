@@ -42,6 +42,31 @@ test.describe('ear training', () => {
     ).toBeVisible()
   })
 
+  test('completes a text-only theory round without audio', async ({ page }) => {
+    await page.goto('/ear')
+    const theoryCard = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Theory quiz', exact: true }) })
+    await theoryCard.getByRole('button', { name: 'Practice' }).click()
+    await expect(page).toHaveURL(/\/ear\/theory/)
+
+    // No Play button: the prompt text is the question.
+    for (let question = 1; question <= 10; question += 1) {
+      await expect(page.getByRole('button', { name: 'Play' })).toHaveCount(0)
+      await page.locator('[data-ear-options] button').first().click()
+      await expect(page.getByRole('status')).toBeVisible()
+      await page.getByRole('button', { name: 'Next' }).click()
+    }
+
+    await expect(page.getByText(/You got \d+\/10 correct/)).toBeVisible()
+
+    // The round lands on the same stat line as the audio drills.
+    await page.goto('/ear')
+    await expect(
+      theoryCard.getByText(/10 answers · \d+% correct · best streak \d+ · ~\d+\.\ds each/),
+    ).toBeVisible()
+  })
+
   test('rejects unknown drills and level 2 adds the sevenths', async ({ page }) => {
     await page.goto('/ear/bogus')
     await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
