@@ -60,6 +60,33 @@ test.describe('audio tools', () => {
     await expect(page.locator('[data-tuner-state]')).toHaveAttribute('data-tuner-state', 'idle')
   })
 
+  test('tunes against a target note with flat/in-tune feedback and string presets', async ({ page }) => {
+    await useFakeMic(page)
+    await page.goto('/tuner')
+    await page.getByRole('button', { name: 'Start' }).click()
+    await expect(page.locator('[data-tuner-state]')).toHaveAttribute('data-tuner-state', 'listening')
+
+    const display = page.locator('[data-tuner-note]')
+    // The fake mic plays A4. Targeting A# (a semitone higher) reads flat, ~−100¢.
+    await page.getByLabel('Target note').selectOption({ label: 'A#4' })
+    await expect(display).toHaveAttribute('data-tuner-status', 'flat')
+    await expect(display).toHaveAttribute('data-tuner-target-cents', /^-?(9[5-9]|10[0-5])$/)
+
+    // Targeting the same pitch class two octaves lower folds to in tune:
+    // octave lock-ons must not read as ±2400¢.
+    await page.getByLabel('Target note').selectOption({ label: 'A2' })
+    await expect(display).toHaveAttribute('data-tuner-status', 'in-tune')
+    await expect(display).toHaveAttribute('data-tuner-target-cents', /^-?(0|[1-9]|10)$/)
+
+    // The standard-tuning preset buttons drive the target select.
+    await page.getByRole('button', { name: '5 · A2' }).click()
+    await expect(page.getByLabel('Target note')).toHaveValue('A2')
+    await expect(page.getByRole('button', { name: '5 · A2' })).toHaveAttribute('aria-pressed', 'true')
+
+    await page.getByRole('button', { name: 'Stop' }).click()
+    await expect(page.locator('[data-tuner-state]')).toHaveAttribute('data-tuner-state', 'idle')
+  })
+
   test('records a take, tags it to an exercise and sets it as the reference', async ({ page }) => {
     await useFakeMic(page)
     await createExercise(page, 'Bend drill')

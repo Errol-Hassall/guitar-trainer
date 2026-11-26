@@ -102,7 +102,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - One reference take per exercise (star a take; it appears as a chip on the exercise page)
 - Backing tracks from an audio file or an http(s) URL; tempo 50–200% via time-stretch that preserves pitch (practice-grade WSOLA), plus an independent −12…+12 semitone shift
 - A/B loop points with looping, a gradual speed ramp across passes, and a track-volume slider for fading the track under your playing
-- Chromatic tuner (YIN pitch detection) with an optional target note so bends can be checked in cents
+- Chromatic tuner (YIN pitch detection) that doubles as a string tuner: one-tap standard-tuning presets (6·E2 … 1·E4), and against the chosen string or any target note a flat/sharp/in-tune verdict (±10¢ window) with an octave-folded cents readout, so octave lock-ons on soft plucks still guide tuning; also usable to check bends in cents
 
 **Workflow & data**
 
@@ -269,7 +269,9 @@ attached recording, and like ear stats it is outside the v1 JSON backup format. 
 practice-volume chart: a fixed 14-day window over the most recent 100 sessions — no weekly
 view toggle, no practice-day counter. For the theme toggle: the browser's theme-color meta
 tag stays dark, and a couple of player accents (range inputs, waveform canvas) keep their
-hardcoded amber/dark colors in both themes.
+hardcoded amber/dark colors in both themes. For the tuner: only standard-tuning string
+presets (other tunings use the free target select), a fixed ±10¢ in-tune window, no
+automatic string detection from the pitch, and no persistence of the last-used target.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

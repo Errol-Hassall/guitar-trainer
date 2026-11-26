@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computePeaks, detectPitch, frequencyToNote } from '#/lib/audio'
+import { centsToTarget, computePeaks, detectPitch, frequencyToNote } from '#/lib/audio'
 
 const SAMPLE_RATE = 48_000
 
@@ -95,5 +95,39 @@ describe('frequencyToNote', () => {
     expect(note?.octave).toBe(4)
     expect(note?.cents).toBeGreaterThan(29)
     expect(note?.cents).toBeLessThan(33)
+  })
+})
+
+describe('centsToTarget', () => {
+  it('is zero for the exact target and small offsets round', () => {
+    expect(centsToTarget(440, 440)).toBe(0)
+    expect(centsToTarget(440 * 2 ** (1 / 1200), 440)).toBe(1)
+    expect(centsToTarget(440 * 2 ** (-30 / 1200), 440)).toBe(-30)
+  })
+
+  it('reports a semitone away as −100/+100', () => {
+    const asharp4 = 440 * 2 ** (1 / 12)
+    expect(centsToTarget(440, asharp4)).toBe(-100)
+    expect(centsToTarget(asharp4, 440)).toBe(100)
+  })
+
+  it('folds octave lock-ons to the same reading', () => {
+    // YIN locking an octave (or two) off must still guide tuning correctly.
+    expect(centsToTarget(880, 440)).toBe(0)
+    expect(centsToTarget(220, 440)).toBe(0)
+    expect(centsToTarget(1760, 440)).toBe(0)
+    expect(centsToTarget(880 * 2 ** (-30 / 1200), 440)).toBe(-30)
+  })
+
+  it('does not fold a genuinely different pitch class away', () => {
+    // A perfect fifth above the target is still far off, just read against the
+    // nearest octave (a fourth below it).
+    expect(centsToTarget(660, 440)).toBe(-498)
+  })
+
+  it('returns 0 for unusable input', () => {
+    expect(centsToTarget(Number.NaN, 440)).toBe(0)
+    expect(centsToTarget(440, 0)).toBe(0)
+    expect(centsToTarget(-5, 440)).toBe(0)
   })
 })

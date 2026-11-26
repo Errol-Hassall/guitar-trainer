@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { MicOff, Square } from 'lucide-react'
-import { detectPitch, frequencyToNote, NOTE_NAMES, PITCH_MAX_HZ, PITCH_MIN_HZ } from '#/lib/audio'
+import { centsToTarget, detectPitch, frequencyToNote, NOTE_NAMES, PITCH_MAX_HZ, PITCH_MIN_HZ } from '#/lib/audio'
 import { describeMicError } from '#/components/audio/mic'
 import { getAudioContext } from '#/components/metronome/audio'
 import { Button } from '#/components/ui/button'
@@ -28,13 +28,34 @@ const TARGET_NOTES: { label: string; frequency: number }[] = (() => {
   return notes
 })()
 
+/** Open strings of standard tuning (EADGBE), low to high. */
+const STANDARD_STRINGS = [
+  { string: 6, label: 'E2' },
+  { string: 5, label: 'A2' },
+  { string: 4, label: 'D3' },
+  { string: 3, label: 'G3' },
+  { string: 2, label: 'B3' },
+  { string: 1, label: 'E4' },
+] as const
+
+/** Within this many cents of the target (or nearest note) counts as in tune. */
+const IN_TUNE_CENTS = 10
+
 type TunerState = 'idle' | 'listening' | 'error'
 
 interface Reading {
   noteLabel: string
+  /** Cents from the nearest chromatic note, always within ±50. */
   cents: number
-  /** Cents away from the chosen target, when one is set. */
+  /** Octave-folded cents away from the chosen target, when one is set. */
   targetCents: number | null
+}
+
+type TunerStatus = 'flat' | 'sharp' | 'in-tune'
+
+function statusFor(cents: number): TunerStatus {
+  if (Math.abs(cents) <= IN_TUNE_CENTS) return 'in-tune'
+  return cents < 0 ? 'flat' : 'sharp'
 }
 
 function TunerPage() {
@@ -101,7 +122,8 @@ function TunerPage() {
         setReading({
           noteLabel: `${note.name}${note.octave}`,
           cents: note.cents,
-          targetCents: target === null ? null : Math.round(1200 * Math.log2(frequency / target)),
+          // Octave-folded, so a lock-on an octave off still reads sensibly.
+          targetCents: target === null ? null : centsToTarget(frequency, target),
         })
       }
       rafRef.current = requestAnimationFrame(loop)
@@ -119,14 +141,16 @@ function TunerPage() {
   }
 
   const targetNote = TARGET_NOTES.find((note) => note.label === targetLabel)
-  const inTune =
-    reading !== null && reading.targetCents !== null && Math.abs(reading.targetCents) <= 10
+  // With a target the bar and number track the target (tuning mode); without
+  // one they track the nearest chromatic note.
+  const primaryCents = reading?.targetCents ?? reading?.cents ?? null
+  const status = primaryCents === null ? null : statusFor(primaryCents)
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
       <PageHeader
         title="Tuner"
-        description="Chromatic tuner. Pick a target note to check bends against it."
+        description="Chromatic tuner. Pick a string to tune it, or any target note to check bends against it."
       />
 
       <div data-tuner-state={state} className="flex flex-col gap-4">
@@ -141,7 +165,11 @@ function TunerPage() {
             <div
               data-tuner-note={reading?.noteLabel ?? ''}
               data-tuner-cents={reading ? String(reading.cents) : '0'}
-              className={`text-6xl font-semibold tabular-nums ${inTune ? 'text-accent' : ''}`}
+              data-tuner-target-cents={
+                reading !== null && reading.targetCents !== null ? String(reading.targetCents) : ''
+              }
+              data-tuner-status={status ?? ''}
+              className={`text-6xl font-semibold tabular-nums ${status === 'in-tune' ? 'text-accent' : ''}`}
             >
               {state === 'listening' && reading === null ? (
                 <span className="text-2xl text-muted">— listening —</span>
@@ -150,21 +178,23 @@ function TunerPage() {
               )}
             </div>
 
-            {reading !== null ? (
+            {reading !== null && primaryCents !== null && status !== null ? (
               <div className="flex w-full max-w-xs flex-col gap-1">
-                <CentsBar cents={reading.cents} />
+                <CentsBar cents={primaryCents} />
                 <p className="text-center text-sm text-muted tabular-nums">
-                  {reading.cents >= 0 ? '+' : ''}
-                  {reading.cents}¢ from {reading.noteLabel}
+                  {primaryCents >= 0 ? '+' : ''}
+                  {primaryCents}¢{' '}
+                  <span className={status === 'in-tune' ? 'font-medium text-accent' : ''}>
+                    {status === 'in-tune' ? 'in tune' : status}
+                  </span>
                   {reading.targetCents !== null && targetNote ? (
                     <>
-                      {' · '}
-                      <span className={inTune ? 'font-medium text-accent' : ''}>
-                        {reading.targetCents >= 0 ? '+' : ''}
-                        {reading.targetCents}¢ from target {targetNote.label}
-                      </span>
+                      {' vs '}
+                      {targetNote.label}
                     </>
-                  ) : null}
+                  ) : (
+                    <> from {reading.noteLabel}</>
+                  )}
                 </p>
               </div>
             ) : null}
@@ -181,7 +211,24 @@ function TunerPage() {
               )}
             </div>
 
-            <Field label="Target note (for bends)" htmlFor="tuner-target">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-sm text-muted">Standard tuning</span>
+              <div className="flex flex-wrap justify-center gap-1">
+                {STANDARD_STRINGS.map((preset) => (
+                  <Button
+                    key={preset.string}
+                    size="sm"
+                    variant={targetLabel === preset.label ? 'primary' : 'secondary'}
+                    aria-pressed={targetLabel === preset.label}
+                    onClick={() => setTargetLabel(preset.label)}
+                  >
+                    {preset.string} · {preset.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <Field label="Target note" htmlFor="tuner-target">
               <select
                 id="tuner-target"
                 value={targetLabel}

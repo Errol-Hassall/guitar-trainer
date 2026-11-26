@@ -102,6 +102,21 @@ export function detectPitch(samples: Float32Array, sampleRate: number): number |
   return sampleRate / peakLag
 }
 
+/**
+ * Cents relative to a target frequency, folded across octaves: the offset is
+ * read against the nearest octave of the target, so an octave lock-on (a
+ * common YIN failure on soft or harmonic plucks) still guides tuning instead
+ * of reading ±1200. A genuinely different pitch class stays large (e.g. a
+ * fifth above reads −498, not 0).
+ */
+export function centsToTarget(frequency: number, targetHz: number): number {
+  if (!Number.isFinite(frequency) || frequency <= 0) return 0
+  if (!Number.isFinite(targetHz) || targetHz <= 0) return 0
+  const ratio = frequency / targetHz
+  const fold = Math.round(Math.log2(ratio))
+  return Math.round(1200 * Math.log2(ratio / 2 ** fold))
+}
+
 /** Nearest chromatic note for a frequency, with cents deviation from it. */
 export function frequencyToNote(
   frequency: number,
