@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { MAJOR_SCALE } from '#/lib/ear'
 import {
   CHORD_DIAGRAMS,
+  MODES,
   circleOfFifths,
   chordDiagram,
   chordPcs,
@@ -9,7 +11,10 @@ import {
   keySignature,
   minorDiatonicChords,
   minorKeySignature,
+  modeById,
+  modeNoteNames,
   neckNotes,
+  parentMajorRoot,
   relativeMinor,
   scaleNoteNames,
   scalePcs,
@@ -194,5 +199,26 @@ describe('chord diagrams', () => {
     expect(lines[4]).toBe('A|----- 3--') // A string, fret 3
     expect(lines[5]).toBe('E|x--------') // low E muted
     expect(lines[6]).toBe('   |  1 2 3 4')
+  })
+})
+
+describe('modes', () => {
+  it('lists the seven diatonic modes as rotations of the major scale', () => {
+    expect(MODES).toHaveLength(7)
+    MODES.forEach((mode, degree) => {
+      const expected = Array.from({ length: 7 }, (_, j) => (MAJOR_SCALE[(degree + j) % 7] - MAJOR_SCALE[degree] + 12) % 12)
+      expect(mode.intervals).toEqual(expected)
+    })
+  })
+
+  it('spells mode notes with one note per letter', () => {
+    expect(modeNoteNames(2, modeById('dorian')!)).toEqual(['D', 'E', 'F', 'G', 'A', 'B', 'C'])
+    expect(modeNoteNames(6, modeById('lydian')!)).toEqual(['F#', 'G#', 'A#', 'B#', 'C#', 'D#', 'E#'])
+  })
+
+  it("names the major key that shares a mode's notes", () => {
+    expect(parentMajorRoot(2, modeById('dorian')!)).toBe(0) // D Dorian = C major
+    expect(parentMajorRoot(9, modeById('aeolian')!)).toBe(0) // A Aeolian = C major
+    expect(parentMajorRoot(7, modeById('mixolydian')!)).toBe(0) // G Mixolydian = C major
   })
 })

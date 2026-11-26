@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–5 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–6 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -33,11 +33,11 @@ HokSai has a whole six-page theory section:
 4. ✅ **Keys page** — major + minor signatures (minor via relative major) and the seven
    diatonic triads per key with Roman numerals.
 5. ✅ **Circle of fifths** — interactive ring, tap a segment for signature + relative minor + triads.
-6. **Modes page** — mode colours (Dorian / Mixolydian), "scales of this genre" mapping.
-   → Missing.
+6. ✅ **Modes page** — seven modes with colour/character/genre, spelling per root, parent major,
+   fretboard playback.
 
-The shared fretboard component underpins 1–3; keys and circle are data + rendering on top
-of `theory.ts`. Modes (6) will be the same.
+The shared fretboard component underpins 1–3; keys, circle and modes are data + rendering on
+top of `theory.ts`.
 
 ## Practice
 

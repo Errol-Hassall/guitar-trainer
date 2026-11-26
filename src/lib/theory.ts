@@ -179,7 +179,7 @@ export function scaleTypeById(id: string): ScaleType | undefined {
 }
 
 /** The pitch classes a scale contains (unique, in interval order). */
-export function scalePcs(rootPc: RootPc, type: ScaleType): number[] {
+export function scalePcs(rootPc: RootPc, type: { intervals: readonly number[] }): number[] {
   const seen = new Set<number>()
   const pcs: number[] = []
   for (const offset of type.intervals) {
@@ -222,6 +222,44 @@ export function scaleNoteNames(rootPc: RootPc, type: ScaleType): string[] {
     }
     return best!.name
   })
+}
+
+// --- Modes --------------------------------------------------------------------------
+
+export interface Mode {
+  id: string
+  name: string
+  intervals: number[]
+  /** Swatch colour for the mode's character line. */
+  color: string
+  character: string
+  genres: string
+}
+
+/** The seven diatonic modes, Ionian (degree 1) through Locrian (degree 7). */
+export const MODES: readonly Mode[] = [
+  { id: 'ionian', name: 'Ionian', intervals: [0, 2, 4, 5, 7, 9, 11], color: '#f4b942', character: 'Bright, at home', genres: 'pop, country' },
+  { id: 'dorian', name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10], color: '#46c8bd', character: 'Smoky, bluesy minor', genres: 'blues, rock, jazz' },
+  { id: 'phrygian', name: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10], color: '#f07b84', character: 'Dark, tense', genres: 'flamenco, metal' },
+  { id: 'lydian', name: 'Lydian', intervals: [0, 2, 4, 6, 7, 9, 11], color: '#a78bfa', character: 'Floaty, dreamy', genres: 'dream pop, jazz' },
+  { id: 'mixolydian', name: 'Mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10], color: '#fb923c', character: 'Gritty major with a b7', genres: 'rock, blues, folk' },
+  { id: 'aeolian', name: 'Aeolian', intervals: [0, 2, 3, 5, 7, 8, 10], color: '#60a5fa', character: 'Plain minor', genres: 'ballads, minor rock' },
+  { id: 'locrian', name: 'Locrian', intervals: [0, 1, 3, 5, 6, 8, 10], color: '#9aa7b4', character: 'Unstable, passing through', genres: 'avant-garde, transitions' },
+] as const
+
+export function modeById(id: string): Mode | undefined {
+  return MODES.find((mode) => mode.id === id)
+}
+
+/** A mode's notes, correctly spelled (one note per letter, like a diatonic scale). */
+export function modeNoteNames(rootPc: RootPc, mode: Mode): string[] {
+  return diatonicNames(rootPc, [...mode.intervals])
+}
+
+/** The major key that shares a mode's notes (D Dorian = C major, A Aeolian = C major). */
+export function parentMajorRoot(rootPc: RootPc, mode: Mode): RootPc {
+  const degree = MODES.indexOf(mode)
+  return ((rootPc - MAJOR_SCALE[degree]) % 12 + 12) % 12
 }
 
 /** Open-string MIDI notes, low E2 → high e4. */

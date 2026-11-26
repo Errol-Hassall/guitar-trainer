@@ -17,6 +17,7 @@ import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as KeysRouteImport } from './routes/keys'
 import { Route as MetronomeRouteImport } from './routes/metronome'
+import { Route as ModesRouteImport } from './routes/modes'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RecordingsRouteImport } from './routes/recordings'
 import { Route as ScalesRouteImport } from './routes/scales'
@@ -72,6 +73,11 @@ const KeysRoute = KeysRouteImport.update({
 const MetronomeRoute = MetronomeRouteImport.update({
   id: '/metronome',
   path: '/metronome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModesRoute = ModesRouteImport.update({
+  id: '/modes',
+  path: '/modes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProgressRoute = ProgressRouteImport.update({
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
+  '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
+  '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
+  '/modes': typeof ModesRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
   '/scales': typeof ScalesRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/keys'
     | '/metronome'
+    | '/modes'
     | '/progress'
     | '/recordings'
     | '/scales'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/keys'
     | '/metronome'
+    | '/modes'
     | '/progress'
     | '/recordings'
     | '/scales'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/history'
     | '/keys'
     | '/metronome'
+    | '/modes'
     | '/progress'
     | '/recordings'
     | '/scales'
@@ -324,6 +336,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   KeysRoute: typeof KeysRoute
   MetronomeRoute: typeof MetronomeRoute
+  ModesRoute: typeof ModesRoute
   ProgressRoute: typeof ProgressRoute
   RecordingsRoute: typeof RecordingsRoute
   ScalesRoute: typeof ScalesRoute
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       path: '/metronome'
       fullPath: '/metronome'
       preLoaderRoute: typeof MetronomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modes': {
+      id: '/modes'
+      path: '/modes'
+      fullPath: '/modes'
+      preLoaderRoute: typeof ModesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/progress': {
@@ -524,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   KeysRoute: KeysRoute,
   MetronomeRoute: MetronomeRoute,
+  ModesRoute: ModesRoute,
   ProgressRoute: ProgressRoute,
   RecordingsRoute: RecordingsRoute,
   ScalesRoute: ScalesRoute,
