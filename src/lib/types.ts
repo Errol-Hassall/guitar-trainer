@@ -280,6 +280,10 @@ export interface EarStat {
   level: number
   attempts: number
   correct: number
+  /** Longest run of consecutive correct answers within a single round. */
+  bestStreak: number
+  /** Sum of per-question response times in ms; divide by attempts for the average. */
+  totalResponseMs: number
   updatedAt: string
 }
 

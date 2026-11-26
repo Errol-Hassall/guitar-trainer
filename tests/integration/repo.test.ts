@@ -749,9 +749,9 @@ describe('ear stats', () => {
   it('starts empty and accumulates rounds per drill and level', () => {
     expect(repo.listEarStats()).toEqual([])
 
-    repo.logEarRound({ drill: 'intervals', level: 1, correct: 8, total: 10 })
-    repo.logEarRound({ drill: 'intervals', level: 1, correct: 5, total: 10 })
-    repo.logEarRound({ drill: 'chord-quality', level: 2, correct: 3, total: 10 })
+    repo.logEarRound({ drill: 'intervals', level: 1, correct: 8, total: 10, bestStreak: 6, totalResponseMs: 4200 })
+    repo.logEarRound({ drill: 'intervals', level: 1, correct: 5, total: 10, bestStreak: 3, totalResponseMs: 6100 })
+    repo.logEarRound({ drill: 'chord-quality', level: 2, correct: 3, total: 10, bestStreak: 2, totalResponseMs: 9000 })
 
     // Two distinct (drill, level) pairs: the two interval rounds upsert one row.
     const stats = repo.listEarStats()
@@ -760,8 +760,13 @@ describe('ear stats', () => {
     expect(intervals.level).toBe(1)
     expect(intervals.attempts).toBe(20)
     expect(intervals.correct).toBe(13)
+    // Streak keeps the best round; response time sums across rounds.
+    expect(intervals.bestStreak).toBe(6)
+    expect(intervals.totalResponseMs).toBe(10300)
     const sevenths = stats.find((stat) => stat.drill === 'chord-quality')!
     expect(sevenths.level).toBe(2)
     expect(sevenths.attempts).toBe(10)
+    expect(sevenths.bestStreak).toBe(2)
+    expect(sevenths.totalResponseMs).toBe(9000)
   })
 })

@@ -16,7 +16,8 @@ function statLine(drill: (typeof EAR_DRILLS)[number]['id'], level: number, stats
   const stat = stats.find((item) => item.drill === drill && item.level === level)
   if (!stat || stat.attempts === 0) return 'Not practiced yet'
   const percent = Math.round((stat.correct / stat.attempts) * 100)
-  return `${stat.attempts} answers · ${percent}% correct`
+  const avgSeconds = (stat.totalResponseMs / stat.attempts / 1000).toFixed(1)
+  return `${stat.attempts} answers · ${percent}% correct · best streak ${stat.bestStreak} · ~${avgSeconds}s each`
 }
 
 function EarPage() {

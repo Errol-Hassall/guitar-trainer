@@ -48,6 +48,13 @@ function QuizDrill({ drill, definitionName }: { drill: EarDrillId; definitionNam
   const [finished, setFinished] = useState(false)
   const [error, setError] = useState('')
   const [logging, setLogging] = useState(false)
+  // Gamification data per round: when the question was shown and the streak of
+  // consecutive correct answers (best kept separately so a wrong answer resets
+  // the run but not the record).
+  const askedAtRef = useRef(Date.now())
+  const roundStreakRef = useRef(0)
+  const bestStreakRef = useRef(0)
+  const responseMsTotalRef = useRef(0)
 
   async function play() {
     setError('')
@@ -60,21 +67,35 @@ function QuizDrill({ drill, definitionName }: { drill: EarDrillId; definitionNam
 
   function pick(index: number) {
     if (picked !== null) return
+    const isCorrect = index === question.answerIndex
     setPicked(index)
-    if (index === question.answerIndex) setScore((current) => current + 1)
+    if (isCorrect) setScore((current) => current + 1)
+    responseMsTotalRef.current += Math.max(0, Date.now() - askedAtRef.current)
+    roundStreakRef.current = isCorrect ? roundStreakRef.current + 1 : 0
+    bestStreakRef.current = Math.max(bestStreakRef.current, roundStreakRef.current)
   }
 
   async function next() {
     if (picked === null || logging) return
     if (count < ROUND_LENGTH) {
       setQuestion(makeQuestion(drill, level))
+      askedAtRef.current = Date.now()
       setPicked(null)
       setCount((current) => current + 1)
       return
     }
     setLogging(true)
     try {
-      await logEarRound({ data: { drill, level, correct: score, total: ROUND_LENGTH } })
+      await logEarRound({
+        data: {
+          drill,
+          level,
+          correct: score,
+          total: ROUND_LENGTH,
+          bestStreak: bestStreakRef.current,
+          totalResponseMs: responseMsTotalRef.current,
+        },
+      })
       setFinished(true)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not save your round.')
@@ -85,6 +106,10 @@ function QuizDrill({ drill, definitionName }: { drill: EarDrillId; definitionNam
 
   function restart() {
     setQuestion(makeQuestion(drill, level))
+    askedAtRef.current = Date.now()
+    roundStreakRef.current = 0
+    bestStreakRef.current = 0
+    responseMsTotalRef.current = 0
     setCount(1)
     setPicked(null)
     setScore(0)

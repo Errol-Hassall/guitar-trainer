@@ -873,6 +873,8 @@ interface EarStatRow {
   level: number
   attempts: number
   correct: number
+  best_streak: number
+  total_response_ms: number
   updated_at: string
 }
 
@@ -885,6 +887,8 @@ export function listEarStats(): EarStat[] {
     level: Number(row.level),
     attempts: Number(row.attempts),
     correct: Number(row.correct),
+    bestStreak: Number(row.best_streak),
+    totalResponseMs: Number(row.total_response_ms),
     updatedAt: row.updated_at,
   }))
 }
@@ -894,15 +898,27 @@ export function logEarRound(input: {
   level: number
   correct: number
   total: number
+  bestStreak: number
+  totalResponseMs: number
 }): void {
   db.prepare(
-    `INSERT INTO ear_stats (drill, level, attempts, correct, updated_at)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO ear_stats (drill, level, attempts, correct, best_streak, total_response_ms, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (drill, level) DO UPDATE SET
        attempts = attempts + excluded.attempts,
        correct = correct + excluded.correct,
+       best_streak = MAX(best_streak, excluded.best_streak),
+       total_response_ms = total_response_ms + excluded.total_response_ms,
        updated_at = excluded.updated_at`,
-  ).run(input.drill, input.level, input.total, input.correct, nowIso())
+  ).run(
+    input.drill,
+    input.level,
+    input.total,
+    input.correct,
+    input.bestStreak,
+    input.totalResponseMs,
+    nowIso(),
+  )
 }
 
 interface RhythmRunRow {

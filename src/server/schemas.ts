@@ -165,6 +165,8 @@ export const logEarRoundSchema = z
     level: z.number().int().min(1).max(2),
     correct: z.number().int().min(0),
     total: z.number().int().min(1).max(100),
+    bestStreak: z.number().int().min(0).max(100),
+    totalResponseMs: z.number().int().min(0),
   })
   .refine((round) => round.correct <= round.total, {
     message: 'Correct answers cannot exceed the total',

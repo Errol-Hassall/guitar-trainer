@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10, 12–13 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12–14 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -68,9 +68,10 @@ top of `theory.ts`.
 13. ✅ **Genre-specific paths** — seeded *Blues Path* (pentatonic box → blue notes →
     12-bar changes → phrasing, theme "Expression & Progressions") and a static `/genres`
     page: curated scales per genre plus the modes tagged for it (derived from MODES).
-14. **Gamified drill structure** *(partial)* — drills as levels with best-score-per-level,
-    consecutive-correct streaks and average time per question. → Our four ear drills keep
-    cumulative attempts/correct per drill+level only; no levels, best scores or timing.
+14. ✅ **Gamified drill structure** — each scored drill keeps accuracy plus a best
+    in-round streak of consecutive correct answers and the average time per answer
+    (question shown → tap), all shown on the ear-training list; chord quality already
+    runs two levels.
 15. **Theory-knowledge questions + interval notebook** *(partial)* — games include
     non-ear questions (note naming, "which chords live in this key") and a personal
     "interval notebook" of learned intervals with audio. → Our ear drills cover the

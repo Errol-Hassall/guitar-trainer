@@ -352,30 +352,46 @@ describe('importExercisesSchema', () => {
 })
 
 describe('logEarRoundSchema', () => {
-  it('accepts a known drill with a plausible score', () => {
+  it('accepts a known drill with a plausible score, streak and timing', () => {
     expect(
-      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 8, total: 10 }).success,
+      logEarRoundSchema
+        .safeParse({ drill: 'intervals', level: 1, correct: 8, total: 10, bestStreak: 5, totalResponseMs: 4200 })
+        .success,
     ).toBe(true)
     expect(
-      logEarRoundSchema.safeParse({ drill: 'chord-quality', level: 2, correct: 0, total: 10 }).success,
+      logEarRoundSchema
+        .safeParse({ drill: 'chord-quality', level: 2, correct: 0, total: 10, bestStreak: 0, totalResponseMs: 0 })
+        .success,
     ).toBe(true)
   })
 
   it('rejects unknown drills, out-of-range levels and impossible scores', () => {
     expect(
-      logEarRoundSchema.safeParse({ drill: 'rhythm-games', level: 1, correct: 1, total: 2 }).success,
+      logEarRoundSchema.safeParse({ drill: 'rhythm-games', level: 1, correct: 1, total: 2, bestStreak: 1, totalResponseMs: 100 }).success,
     ).toBe(false)
     expect(
-      logEarRoundSchema.safeParse({ drill: 'intervals', level: 3, correct: 1, total: 2 }).success,
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 3, correct: 1, total: 2, bestStreak: 1, totalResponseMs: 100 }).success,
     ).toBe(false)
     expect(
-      logEarRoundSchema.safeParse({ drill: 'intervals', level: 0, correct: 1, total: 2 }).success,
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 0, correct: 1, total: 2, bestStreak: 1, totalResponseMs: 100 }).success,
     ).toBe(false)
     expect(
-      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 3, total: 2 }).success,
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 3, total: 2, bestStreak: 1, totalResponseMs: 100 }).success,
     ).toBe(false)
-    expect(logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1 }).success).toBe(
-      false,
-    )
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1, bestStreak: 1, totalResponseMs: 100 }).success,
+    ).toBe(false)
+  })
+
+  it('rejects negative or fractional streak and timing values', () => {
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1, total: 2, bestStreak: -1, totalResponseMs: 100 }).success,
+    ).toBe(false)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1, total: 2, bestStreak: 1, totalResponseMs: -5 }).success,
+    ).toBe(false)
+    expect(
+      logEarRoundSchema.safeParse({ drill: 'intervals', level: 1, correct: 1, total: 2, bestStreak: 1.5, totalResponseMs: 100 }).success,
+    ).toBe(false)
   })
 })

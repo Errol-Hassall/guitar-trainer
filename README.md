@@ -81,6 +81,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 
 - Four scored drills, all synthesized in the browser with Web Audio (no samples): **Intervals** (the ten standard ones), **Scale degrees** (major scale 1–7, tonic played first), **Chord quality** (level 1 major/minor, level 2 adds maj7/min7/dom7) and **Progressions** (four common diatonic three-chord progressions)
 - Ten prompts per round: listen as often as you like, tap the answer, get instant feedback; accuracy is kept per drill/level and shown on the drill list
+- Gamification per drill/level: best in-round streak of consecutive correct answers and average time per answer (from question shown to tap), both shown on the drill list
 - **Transcription helper** (unscored): a 2–4 note stepwise phrase to sing first and then find on the guitar, with a reveal button — and an optional mic take saved straight into the recordings store (Phase 5), playable back next to the original flow
 
 **Exercises & progress**
@@ -253,7 +254,10 @@ time), finger-order annotations (technique labels only) and AI-assisted generati
 (deterministic local generation instead, per the no-LLM decision); licks are not saved —
 the seed reproduces them. In the blues path and genres page: only five genres are listed
 (no per-genre drill content), the genres page links to the libraries without pre-selecting
-a scale (they take no query params), and blues is the only genre with its own path.
+a scale (they take no query params), and blues is the only genre with its own path. For the
+ear gamification: the streak is the best within a single round (it does not carry over
+between rounds), timing is an average per answer rather than a best time, and levels exist
+only for chord quality.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

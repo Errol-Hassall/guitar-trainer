@@ -196,6 +196,10 @@ const MIGRATIONS: string[] = [
   );
   CREATE INDEX idx_rhythm_stats_created ON rhythm_stats(created_at DESC);
   `,
+  `
+  ALTER TABLE ear_stats ADD COLUMN best_streak INTEGER NOT NULL DEFAULT 0 CHECK (best_streak >= 0);
+  ALTER TABLE ear_stats ADD COLUMN total_response_ms INTEGER NOT NULL DEFAULT 0 CHECK (total_response_ms >= 0);
+  `,
 ]
 
 export const databasePath = resolve(

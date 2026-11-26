@@ -33,10 +33,12 @@ test.describe('ear training', () => {
 
     await expect(page.getByText(/You got \d+\/10 correct/)).toBeVisible()
 
-    // The round is persisted per drill.
+    // The round is persisted per drill, with streak and average response time.
     await page.goto('/ear')
     await expect(
-      page.locator('section', { hasText: 'Name the interval' }).getByText(/10 answers · \d+% correct/),
+      page
+        .locator('section', { hasText: 'Name the interval' })
+        .getByText(/10 answers · \d+% correct · best streak \d+ · ~\d+\.\ds each/),
     ).toBeVisible()
   })
 
