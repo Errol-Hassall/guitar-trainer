@@ -16,9 +16,28 @@
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
+/* Light palette; the dark values above are the default (no attribute). */
+[data-theme="light"] {
+  --color-bg: #f6f5f0;
+  --color-surface: #ffffff;
+  --color-raised: #eceae3;
+  --color-line: #d8d4c9;
+  --color-ink: #1c2126;
+  --color-muted: #5b6670;
+  --color-accent: #9a6a08;
+  --color-accent-ink: #fff8ea;
+  --color-teal: #0d7d74;
+  --color-danger: #c03540;
+  --color-success: #2e7d4f;
+}
+
 @layer base {
   html {
     color-scheme: dark;
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
   }
 
   body {

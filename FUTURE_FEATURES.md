@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10, 12–16 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12–17 ✅ built · 11 skipped (user decision) · 18–20 excluded by design. All buildable items done.
 
 ## Theory library — the biggest gap
 
@@ -82,8 +82,9 @@ top of `theory.ts`.
 16. ✅ **Practice-log trends** — the history page now leads with a practice-volume
     chart: minutes per day over the last 14 days (dependency-free SVG), built from the
     session totals already in the DB.
-17. **Light/dark theme toggle** — persisted user choice, default dark, pre-paint script
-    to avoid flash. → We are dark-only (`color-scheme: dark`).
+17. ✅ **Light/dark theme toggle** — header toggle with a light palette (token
+    overrides on `data-theme="light"`), default dark, persisted in localStorage and
+    restored by a pre-paint script so there is no flash of the wrong theme.
 18. **Feedback submission** — "send a suggestion" form that POSTs to the author
     (with failure status shown). → Nothing; arguably fine for a self-hosted app.
 19. **Optional account / sign-up** — the app is usable without an account, but an

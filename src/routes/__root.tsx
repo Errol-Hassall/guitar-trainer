@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   createRootRoute,
   HeadContent,
   Link,
   Scripts,
 } from '@tanstack/react-router'
-import { Guitar } from 'lucide-react'
+import { Guitar, Moon, Sun } from 'lucide-react'
 import { APP_NAME } from '#/lib/types'
 import { MetronomeProvider, useGlobalMetronome } from '#/components/metronome/global-metronome'
 import '../styles.css'
@@ -55,6 +55,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Pre-paint theme restore, before the body renders: no flash of the default. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try { if (localStorage.getItem('theme') === 'light') document.documentElement.dataset.theme = 'light' } catch {}`,
+          }}
+        />
       </head>
       <body>
         <MetronomeProvider>
@@ -103,6 +109,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 </Link>
               ))}
               <MetronomeIndicator />
+              <ThemeToggle />
             </nav>
           </div>
         </header>
@@ -118,6 +125,41 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         ) : null}
       </body>
     </html>
+  )
+}
+
+/** Dark is the default (no attribute); light is persisted in localStorage. */
+function ThemeToggle() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+  useEffect(() => {
+    // The pre-paint script may have restored a saved choice before hydration.
+    setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
+  }, [])
+
+  function toggle() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    if (next === 'light') document.documentElement.dataset.theme = 'light'
+    else delete document.documentElement.dataset.theme
+    try {
+      localStorage.setItem('theme', next)
+    } catch {
+      // Storage unavailable (private mode): the choice just will not persist.
+    }
+    setTheme(next)
+  }
+
+  const Icon = theme === 'dark' ? Sun : Moon
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      data-theme-toggle={theme}
+      className="flex min-h-11 items-center rounded-lg px-2 text-muted transition-colors hover:bg-raised hover:text-ink"
+    >
+      <Icon className="size-5" aria-hidden="true" />
+    </button>
   )
 }
 

@@ -112,6 +112,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Monthly progress check page with built-in milestone lists for months 1–2 / 3–4 / 5–6 / 7–12 (a reference, not ticked state)
 - Data page: Markdown export, full JSON backup (versioned), session CSV for spreadsheets; restore from a JSON backup replaces all data transactionally and re-seeds built-ins; Markdown import reads the Templates and Exercises sections of an export — exercise packs import idempotently (existing names are skipped)
 - Installable PWA: web manifest, SVG icon and a service worker that caches the app shell (network-first). The server must be running for data changes — there is no offline data mode.
+- Light/dark theme toggle in the header: dark is the default, the choice is stored in localStorage and restored by a pre-paint script so there is no flash on load
 
 **Hands-free & spaced repetition**
 
@@ -266,7 +267,9 @@ names, major-key signatures, interval sizes) — no minor keys, no "which chords
 key", no difficulty ramp. In the interval notebook: one free-text note per interval with no
 attached recording, and like ear stats it is outside the v1 JSON backup format. For the
 practice-volume chart: a fixed 14-day window over the most recent 100 sessions — no weekly
-view toggle, no practice-day counter.
+view toggle, no practice-day counter. For the theme toggle: the browser's theme-color meta
+tag stays dark, and a couple of player accents (range inputs, waveform canvas) keep their
+hardcoded amber/dark colors in both themes.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
