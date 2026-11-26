@@ -6,6 +6,8 @@ import {
   chordToText,
   diatonicChords,
   keySignature,
+  minorDiatonicChords,
+  minorKeySignature,
   neckNotes,
   relativeMinor,
   scaleNoteNames,
@@ -22,6 +24,14 @@ describe('key signatures', () => {
     expect(keySignature(5).flats).toEqual(['B']) // F
     expect(keySignature(10).flats).toEqual(['B', 'E']) // Bb
     expect(keySignature(8).flats).toEqual(['B', 'E', 'A', 'D']) // Ab (4 flats)
+  })
+
+  it('gives minor keys the signature of their relative major', () => {
+    expect(minorKeySignature(9)).toEqual({ sharps: [], flats: [] }) // A minor = C major
+    expect(minorKeySignature(11).sharps).toHaveLength(2) // B minor = D major, 2 sharps
+    expect(minorKeySignature(6).sharps).toEqual(['F', 'C', 'G']) // F# minor = A major, 3 sharps
+    expect(minorKeySignature(2).flats).toEqual(['B']) // D minor = F major, 1 flat
+    expect(minorKeySignature(10).sharps).toHaveLength(7) // A# minor = C# major, 7 sharps
   })
 
   it('names the relative minor', () => {
@@ -50,6 +60,19 @@ describe('diatonic chords', () => {
     expect(chords[0]).toMatchObject({ roman: 'I', quality: 'Major 7th', semitones: [0, 4, 7, 11] })
     expect(chords[4]).toMatchObject({ roman: 'V', quality: 'Dominant 7th', semitones: [0, 4, 7, 10] })
     expect(chords[1]).toMatchObject({ roman: 'ii', quality: 'Minor 7th', semitones: [0, 3, 7, 10] })
+  })
+
+  it('lists the natural-minor triads with lowercase i and a major III/VI/VII', () => {
+    const chords = minorDiatonicChords(9) // A minor
+    expect(chords.map((c) => `${c.roman} ${c.name} ${c.quality}`)).toEqual([
+      'i A Minor',
+      'ii° B Diminished',
+      'III C Major',
+      'iv D Minor',
+      'v E Minor',
+      'VI F Major',
+      'VII G Major',
+    ])
   })
 
   it('transposes correctly for a sharp key', () => {

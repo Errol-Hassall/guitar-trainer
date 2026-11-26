@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–3 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–4 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -30,8 +30,8 @@ HokSai has a whole six-page theory section:
    mode. Modes ship as item 6; "boxes" are covered by the whole-neck view + window.
 3. ✅ **Arpeggios page** — chord tones of the 20 common chords on the fretboard with
    fret-window playback (triad/seventh voicings come from the diagram data).
-4. **Keys page** — key signatures for major and minor with accidentals, chord sets per key.
-   → Missing.
+4. ✅ **Keys page** — major + minor signatures (minor via relative major) and the seven
+   diatonic triads per key with Roman numerals.
 5. **Circle of fifths** — interactive circle. → Missing.
 6. **Modes page** — mode colours (Dorian / Mixolydian), "scales of this genre" mapping.
    → Missing.

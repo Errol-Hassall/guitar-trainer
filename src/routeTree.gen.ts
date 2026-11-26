@@ -14,6 +14,7 @@ import { Route as ArpeggiosRouteImport } from './routes/arpeggios'
 import { Route as ChordsRouteImport } from './routes/chords'
 import { Route as DataRouteImport } from './routes/data'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as KeysRouteImport } from './routes/keys'
 import { Route as MetronomeRouteImport } from './routes/metronome'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as RecordingsRouteImport } from './routes/recordings'
@@ -55,6 +56,11 @@ const DataRoute = DataRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KeysRoute = KeysRouteImport.update({
+  id: '/keys',
+  path: '/keys',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MetronomeRoute = MetronomeRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
+  '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
+  '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/chords': typeof ChordsRoute
   '/data': typeof DataRoute
   '/history': typeof HistoryRoute
+  '/keys': typeof KeysRoute
   '/metronome': typeof MetronomeRoute
   '/progress': typeof ProgressRoute
   '/recordings': typeof RecordingsRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/data'
     | '/history'
+    | '/keys'
     | '/metronome'
     | '/progress'
     | '/recordings'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/data'
     | '/history'
+    | '/keys'
     | '/metronome'
     | '/progress'
     | '/recordings'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/chords'
     | '/data'
     | '/history'
+    | '/keys'
     | '/metronome'
     | '/progress'
     | '/recordings'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   ChordsRoute: typeof ChordsRoute
   DataRoute: typeof DataRoute
   HistoryRoute: typeof HistoryRoute
+  KeysRoute: typeof KeysRoute
   MetronomeRoute: typeof MetronomeRoute
   ProgressRoute: typeof ProgressRoute
   RecordingsRoute: typeof RecordingsRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keys': {
+      id: '/keys'
+      path: '/keys'
+      fullPath: '/keys'
+      preLoaderRoute: typeof KeysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/metronome': {
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChordsRoute: ChordsRoute,
   DataRoute: DataRoute,
   HistoryRoute: HistoryRoute,
+  KeysRoute: KeysRoute,
   MetronomeRoute: MetronomeRoute,
   ProgressRoute: ProgressRoute,
   RecordingsRoute: RecordingsRoute,

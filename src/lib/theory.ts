@@ -11,7 +11,7 @@ export type RootPc = number
 /** Number of sharps (+) or flats (−) in each major key, by root pitch class. */
 const MAJOR_KEY_SHARPS: Record<number, number> = {
   0: 0, // C
-  1: -5, // Db
+  1: 7, // C# (its real signature; the flat-side enharmonic is Db)
   2: 2, // D
   3: -3, // Eb
   4: 4, // E
@@ -109,6 +109,34 @@ export function diatonicChords(rootPc: RootPc, kind: 'triad' | 'seventh'): Diato
   const table = kind === 'triad' ? TRIADS : SEVENTHS
   const names = majorScaleNames(rootPc)
   return table.map((entry, degree) => ({
+    name: names[degree],
+    roman: entry.roman,
+    quality: entry.quality,
+    semitones: [...entry.semitones],
+  }))
+}
+
+// --- Minor keys -----------------------------------------------------------------------
+
+/** A minor key shares the signature of its relative major (root + 3). */
+export function minorKeySignature(rootPc: RootPc): KeySignature {
+  return keySignature((rootPc + 3) % 12)
+}
+
+const MINOR_TRIADS = [
+  { roman: 'i', quality: 'Minor', semitones: [0, 3, 7] },
+  { roman: 'ii°', quality: 'Diminished', semitones: [0, 3, 6] },
+  { roman: 'III', quality: 'Major', semitones: [0, 4, 7] },
+  { roman: 'iv', quality: 'Minor', semitones: [0, 3, 7] },
+  { roman: 'v', quality: 'Minor', semitones: [0, 3, 7] },
+  { roman: 'VI', quality: 'Major', semitones: [0, 4, 7] },
+  { roman: 'VII', quality: 'Major', semitones: [0, 4, 7] },
+] as const
+
+/** The seven natural-minor triads of a key, in scale-degree order. */
+export function minorDiatonicChords(rootPc: RootPc): DiatonicChord[] {
+  const names = scaleNoteNames(rootPc, scaleTypeById('natural-minor')!)
+  return MINOR_TRIADS.map((entry, degree) => ({
     name: names[degree],
     roman: entry.roman,
     quality: entry.quality,
