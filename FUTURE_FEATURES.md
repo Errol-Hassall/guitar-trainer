@@ -8,14 +8,17 @@ arpeggios / keys / circle / modes · **paths**: blues / genres / licklab / games
 **tools**: youtube / log / feedback / account).
 
 Each entry: what they do → our nearest neighbour today. Items marked *(partial)* overlap
-with something we already build; the rest are missing outright.
+with something we already build; the rest are missing outright. Entries prefixed ✅ are
+built (see README Features).
+
+Status: 1 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
 We skipped chords and scales content in Phase 6 (spec marked both "future todo").
 HokSai has a whole six-page theory section:
 
-1. **Chord library** — searchable chord database with fretboard diagrams (fret range,
+1. ✅ **Chord library** — searchable chord database with fretboard diagrams (fret range,
    barre vs open classification), "which chords live in this key" lookup, 7th-chord
    colour guide ("colour of dominant 7 — makes the sound want to move on"), I–IV–V
    triads, a how-to-read-diagrams explainer, PNG export and copy-as-text per diagram.

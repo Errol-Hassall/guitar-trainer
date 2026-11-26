@@ -30,6 +30,11 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Skill-tree view: each step is locked until its prerequisite is complete; completing a step unlocks the next, and clearing a step that completed steps depend on is rejected
 - Steps link out to external resources (YouTube searches / books) and to in-app drills where one fits
 
+**Chord library**
+
+- Standard fingerings for the 20 most common chords (open, barre and sevenths) as SVG charts with a copy-as-ASCII button
+- "Chords in a key": the seven diatonic triads or sevenths of any major key with Roman numerals, qualities and the key signature; correctly spelled for sharp keys (F# major ends in E#)
+
 **Ear training**
 
 - Four scored drills, all synthesized in the browser with Web Audio (no samples): **Intervals** (the ten standard ones), **Scale degrees** (major scale 1–7, tonic played first), **Chord quality** (level 1 major/minor, level 2 adds maj7/min7/dom7) and **Progressions** (four common diatonic three-chord progressions)
@@ -188,6 +193,9 @@ TZ is pinned to UTC for tests and Docker; e2e runs with an `en-GB` locale.
 
 Feature gaps vs [hoksai.online](https://hoksai.online/) (chord/scale library, rhythm
 trainer, LickLab, …) are catalogued in [FUTURE_FEATURES.md](FUTURE_FEATURES.md).
+Also skipped in the chord library: fingerings for exotic barre positions beyond the 20
+common chords (the diatonic-in-key lookup still lists them by name), PNG export of
+diagrams (copy-as-ASCII instead) and finger numbers on charts.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the
