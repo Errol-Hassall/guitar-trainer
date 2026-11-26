@@ -37,7 +37,7 @@ timers, notes and history. All data stays on your machine in one SQLite file.
 - Weekly theme rotation (Mon–Sun), overridable per session
 - Per-section countdown with pause/skip, section notes (≤4000 chars), auto-advance with chime (toggleable)
 - One active session at a time; "one thing to fix this week" pinned into every session
-- History of all sessions with totals
+- History of all sessions with totals, topped by a practice-volume chart: minutes per day over the last 14 days (dependency-free SVG)
 
 **Learning paths**
 
@@ -264,7 +264,9 @@ between rounds), timing is an average per answer rather than a best time, and le
 only for chord quality. For the theory quiz: only three question types (fretboard note
 names, major-key signatures, interval sizes) — no minor keys, no "which chords live in this
 key", no difficulty ramp. In the interval notebook: one free-text note per interval with no
-attached recording, and like ear stats it is outside the v1 JSON backup format.
+attached recording, and like ear stats it is outside the v1 JSON backup format. For the
+practice-volume chart: a fixed 14-day window over the most recent 100 sessions — no weekly
+view toggle, no practice-day counter.
 
 The remaining items from the original spec are out of scope: speed trainer,
 focus mode, automatic Sunday theme selection and everything beyond the

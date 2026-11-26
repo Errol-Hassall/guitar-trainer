@@ -77,6 +77,8 @@ test.describe('sessions', () => {
     await expect(page.locator('[data-session-status="completed"]')).toBeVisible()
 
     await page.goto('/history')
+    // The practice-volume chart appears once there is at least one session.
+    await expect(page.locator('[data-volume-graph]')).toBeVisible()
     await expect(
       page.locator('li', { hasText: 'E2E history' }),
     ).toBeVisible()

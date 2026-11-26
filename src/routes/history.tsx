@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { SessionSummary } from '#/lib/types'
+import { VolumeGraph } from '#/components/volume-graph'
 import { listSessions } from '#/server/api'
 import { PageHeader } from '#/components/ui/page-header'
 import { Card } from '#/components/ui/card'
@@ -19,6 +20,11 @@ function HistoryPage() {
         title="History"
         description={sessions.length > 0 ? `Last ${sessions.length} sessions.` : undefined}
       />
+      {sessions.length > 0 && (
+        <Card title="Practice volume" className="mb-4">
+          <VolumeGraph sessions={sessions} />
+        </Card>
+      )}
       <Card>
         {sessions.length === 0 ? (
           <p className="text-sm text-muted">No sessions yet.</p>

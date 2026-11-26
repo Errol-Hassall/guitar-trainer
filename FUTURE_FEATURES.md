@@ -11,7 +11,7 @@ Each entry: what they do → our nearest neighbour today. Items marked *(partial
 with something we already build; the rest are missing outright. Entries prefixed ✅ are
 built (see README Features).
 
-Status: 1–10, 12–15 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
+Status: 1–10, 12–16 ✅ built · 11 skipped (user decision) · 18–20 excluded by design · rest pending.
 
 ## Theory library — the biggest gap
 
@@ -79,10 +79,9 @@ top of `theory.ts`.
 
 ## Tools & meta
 
-16. **Practice-log trends** *(partial)* — a dedicated log page: practice-day count,
-    time spent rendered as hours/minutes, weekly view, "see your real trend". → We have
-    session history with totals and per-exercise BPM graphs, but no chart of practice
-    *volume* over time.
+16. ✅ **Practice-log trends** — the history page now leads with a practice-volume
+    chart: minutes per day over the last 14 days (dependency-free SVG), built from the
+    session totals already in the DB.
 17. **Light/dark theme toggle** — persisted user choice, default dark, pre-paint script
     to avoid flash. → We are dark-only (`color-scheme: dark`).
 18. **Feedback submission** — "send a suggestion" form that POSTs to the author
